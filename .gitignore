@@ -6,3 +6,6 @@ venv/
 
 # Generated / local data (e.g. ChromaDB)
 data/
+
+# Pycache
+__pycache__/
