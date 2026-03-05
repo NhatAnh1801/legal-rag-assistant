@@ -9,11 +9,15 @@ import time
 class GTE(Embeddings):
     def __init__(self, batch_size: int=32):
         self.model_name_or_path = 'Alibaba-NLP/gte-multilingual-base'
-        self.model = AutoModel.from_pretrained(self.model_name_or_path, trust_remote_code=True, dtype=torch.float16)
+        self.model = AutoModel.from_pretrained(
+                self.model_name_or_path, 
+                trust_remote_code=True, 
+                dtype=torch.float16,
+            )
         
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path)
         
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda")
         self.model = self.model.to(self.device)
         
         self.batch_size = batch_size 
@@ -31,29 +35,29 @@ class GTE(Embeddings):
         
         batch_dict = {k: v.to(self.device) for k, v in batch_dict.items()}   # Move the tensors to GPU 
         
-        with torch.no_grad():
+        with torch.inference_mode():
             outputs = self.model(**batch_dict)
             
         embeddings = outputs.last_hidden_state[:, 0]    # CLS
         
         embeddings = F.normalize(embeddings, p=2, dim=1) # L2 Normalization
         
-        # Clean up RAM
-        if torch.cuda.is_available():
-            del batch_dict, outputs
-            torch.cuda.empty_cache()
-        
         return embeddings.tolist()
-        
+      
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         all_embeddings = []
         for i in range(0, len(texts), self.batch_size):
             batch_texts = texts[i:i + self.batch_size]
             embeddings = self._embedding(batch_texts)
             all_embeddings.extend(embeddings)
+            
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         return all_embeddings
         
     def embed_query(self, text: str) -> List[float]:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         return self._embedding([text])[0]
     
     def find_optimal_batch_size(self, max_test_batch: int=256):
