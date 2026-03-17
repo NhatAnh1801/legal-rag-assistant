@@ -17,7 +17,7 @@ class GTE(Embeddings):
         
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path)
         
-        self.device = torch.device("cuda")
+        self.device = torch.device("cpu")
         self.model = self.model.to(self.device)
         
         self.batch_size = batch_size 
@@ -60,7 +60,7 @@ class GTE(Embeddings):
             torch.cuda.empty_cache()
         return self._embedding([text])[0]
     
-    def find_optimal_batch_size(self, max_test_batch: int=256):
+    def _find_optimal_batch_size(self, max_test_batch: int=256):
             """
                 Stress test to identify the maximum safe batch_size on the GPU
                 and plot the throughput to find the optimal performance sweet spot.

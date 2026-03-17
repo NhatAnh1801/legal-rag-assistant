@@ -5,96 +5,83 @@ import tempfile
 
 from src.rag_engine import RagController
 
-MAX_FILE_SIZE_MB = 10
-MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024 
-
+# --- 1. App Configuration ---
 st.set_page_config(
-    page_title="RAG Chatbot",
-    page_icon="🤖",
+    page_title="Legal AI Assistant",
+    page_icon="⚖️",
     layout="wide",
 )
 
-# --- Session: Store user state ---
+# --- Define the Knowledge Hierarchy ---
+# This dictionary maps the jurisdiction to its specific legal domains.
+LEGAL_HIERARCHY = {
+    "Vietnam": [
+        "Tất cả (All)",
+        "Trí tuệ nhân tạo (AI Law)", 
+        "Lao động (Labor Law)", 
+        "Doanh nghiệp (Enterprise Law)",
+        "Dân sự (Civil Law)"
+    ],
+    "United States": [
+        "All",
+        "Corporate Law", 
+        "Intellectual Property", 
+        "Labor Law",
+        "Constitutional Law"
+    ],
+    "United Kingdom": ["All", "Common Law", "Employment Law", "Company Law"],
+    "European Union": ["All", "GDPR/Data Privacy", "AI Act", "Competition Law"]
+}
+
+# --- 2. Session State Initialization ---
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Hello! Upload a document and ask me anything about it."}
+        {"role": "assistant", "content": "Hello! I am your Legal AI Assistant. Please select your jurisdiction and legal domain to begin."}
     ]
 
-if "uploaded_files" not in st.session_state:
-    st.session_state.uploaded_files = []
-    
-if "deleted_files" not in st.session_state:
-    st.session_state.deleted_files = set()
-    
 if "rag_controller" not in st.session_state:
-        st.session_state.rag_controller = RagController()
+    st.session_state.rag_controller = RagController()
 
+# --- 3. Sidebar: Database Info & Controls ---
 with st.sidebar:
-    st.header("Upload document")
+    st.header("⚖️ Legal Database Info")
     
-    uploaded = st.file_uploader(
-        "Upload your documents",
-        type=["pdf"],
-        accept_multiple_files=True,
-        key="file_uploader",
+    # 1st Dropdown: Jurisdiction Selector
+    selected_jurisdiction = st.selectbox(
+        "🌐 Select Jurisdiction",
+        options=list(LEGAL_HIERARCHY.keys()),
+        index=0,
     )
     
-    if uploaded:
-        for file in uploaded:
-            # Avoid re-processing files already stored
-            if file.name in st.session_state.deleted_files:
-                continue
-            existing_names = [f["name"] for f in st.session_state.uploaded_files]
-            if file.name not in existing_names:
-                file_data = {
-                    "name": file.name,
-                    "type": file.type,
-                    "size": file.size
-                }
-                st.session_state.uploaded_files.append(file_data)
-                try:
-                    with st.spinner('Importing and processing file...'):
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file_data["name"])[1]) as tmp_file:
-                            file.seek(0)
-                            shutil.copyfileobj(file, tmp_file)
-                            tmp_file_path = tmp_file.name
-                            print(f'file is saved in {tmp_file_path}')
-                            
-                        # Backend Logic
-                        try:
-                            st.session_state.rag_controller.index_data(tmp_file_path)
-                        finally:
-                            if os.path.exists(tmp_file_path):
-                                os.remove(tmp_file_path)
-                        
-                except Exception as e:
-                    st.error(f'Error processing file: {e}') 
-                
-                
-    if st.session_state.uploaded_files:
-        st.divider()  # draws a horizontal line
-        st.subheader("Uploaded Files")
-        for i, file in enumerate(st.session_state.uploaded_files):
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.text(f"📎 {file['name']}")
-            with col2:
-                if st.button("🗑️", key=f"del_{i}"):
-                    st.session_state.deleted_files.add(file["name"])
-                    st.session_state.uploaded_files.pop(i)
-                    st.rerun()  
-    else:
-        st.info("No documents uploaded yet.")
-        
+    # 2nd Dropdown: Domain Selector (Updates dynamically based on the 1st dropdown)
+    selected_domain = st.selectbox(
+        "📚 Select Legal Domain",
+        options=LEGAL_HIERARCHY[selected_jurisdiction],
+        index=0,
+        help="Narrows the search down to a specific field of law."
+    )
+    
+    # Store selections in session state
+    st.session_state.jurisdiction = selected_jurisdiction
+    st.session_state.domain = selected_domain
+
+    st.info(
+        f"**Targeting:**\n"
+        f"{selected_domain}\n"
+        f"from {selected_jurisdiction} law\n\n"
+        "The assistant will filter the database to match these criteria."
+    )
+    
     st.divider()
     
     if st.button("🗑️ Clear Chat", use_container_width=True):
         st.session_state.messages = [
-            {"role": "assistant", "content": "Hello! Upload a document and ask me anything about it."}
+            {"role": "assistant", "content": f"Ready to answer questions regarding {st.session_state.jurisdiction} - {st.session_state.domain}."}
         ]
         st.rerun()
-        
-st.title("RAG Chatbot")
+
+# --- 4. Main Chat Interface ---
+st.title("🏛️ Legal Counsel RAG")
 
 chat_container = st.container()
 
@@ -103,21 +90,30 @@ with chat_container:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             
-            
-# --- Chat input ---
-prompt = st.chat_input("Ask a question about your documents...")
-if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
+# --- 5. Chat Input & Processing ---
+question = st.chat_input(f"Ask a question about {selected_domain}...")
+
+if question:
+    st.session_state.messages.append({"role": "user", "content": question})
     with chat_container:
         with st.chat_message("user"):
-            st.markdown(prompt)
+            st.markdown(question)
 
     with chat_container:
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
+            with st.spinner(f"Reviewing {selected_jurisdiction} > {selected_domain} documents..."):
                 history = st.session_state.messages[1:]
-                response = ""
-                #response = st.session_state.rag_controller.ask(prompt, history)
+                
+                try:
+                    response = st.session_state.rag_controller.ask(
+                        question=question, 
+                        jurisdiction=st.session_state.jurisdiction,
+                        domain=st.session_state.domain,
+                        history=history
+                    )
+                except Exception as e:
+                    response = f"An error occurred while querying the database: {str(e)}"
+                
             st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
