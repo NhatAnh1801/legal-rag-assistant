@@ -13,18 +13,13 @@ st.set_page_config(
 # This dictionary maps the jurisdiction to its specific legal domains.
 LEGAL_HIERARCHY = {
     "Vietnam": [
-        "Tất cả (All)",
         "Trí tuệ nhân tạo (AI Law)", 
         "Lao động (Labor Law)", 
         "Doanh nghiệp (Enterprise Law)",
         "Dân sự (Civil Law)"
     ],
     "United States": [
-        "All",
-        "Corporate Law", 
-        "Intellectual Property", 
-        "Labor Law",
-        "Constitutional Law"
+        "civil procedure"
     ],
     "United Kingdom": ["All", "Common Law", "Employment Law", "Company Law"],
     "European Union": ["All", "GDPR/Data Privacy", "AI Act", "Competition Law"]
@@ -113,6 +108,13 @@ if question:
                         question=question,
                         history=history
                     )
+                    if response["type"] == "document_based":
+                        st.markdown(response["answer"])
+                        st.caption(f"📄 Source: `{response['source']}` | Page: {response['page']}")
+                    elif response["type"] == "general":
+                        st.markdown(response["answer"])
+                    else:
+                        st.error("Invalid response type")
                 except Exception as e:
                     response = f"An error occurred while querying the database: {str(e)}"
                 

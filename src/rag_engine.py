@@ -1,3 +1,4 @@
+import json
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_classic.retrievers import ParentDocumentRetriever
 from langchain_core.documents import Document
@@ -15,8 +16,9 @@ from src.prompt import*
 import os
 import requests
 import time
+import re       
 
-load_dotenv()
+load_dotenv()   
 
 # DECLARE VARIABLES
 PARENT_CHUNK_SIZE = 1000
@@ -46,11 +48,7 @@ class RagController:
             persist_directory='./data/chromadb'    
         )
         
-        # Init tool_call
-        self.retrieve_doc = tool(response_format="content_and_artifact")(self._retrieve_doc)
-        
         # INIT SMALL2BIG
-        self.small2big_retriever = None
         parent_splitter = RecursiveCharacterTextSplitter(
             chunk_size = PARENT_CHUNK_SIZE,
             length_function = len,
@@ -167,44 +165,66 @@ class RagController:
             print(f"Ingestion failed: {e}")
             raise
 
-    def _retrieve_doc(self, query: str, jurisdiction: str, domain: str) -> tuple:
-        """
-            Query documents from the user's question.
-            Args:
-                query: The user's question or search query.
-                jurisdiction: The jurisdiction to filter by.
-                domain: The domain to filter by.
-            Returns:
-                A tuple of (serialized text, list of Document objects).
-        """
-        try:
-            self.small2big_retriever.vectorstore.search_kwargs = {
-                "filter": {
-                    "$and": [
-                        {"jurisdiction": {"$eq": jurisdiction}},
-                        {"domain": {"$eq": domain}}
-                    ]
+    def get_retrieved_docs(self, jurisdiction: str, domain: str):
+        # Verify if the jurisdiction and domain are valid
+        if jurisdiction not in set(m["jurisdiction"] for m in self.vector_db.get()["metadatas"]):
+            raise ValueError(f"Invalid jurisdiction: {jurisdiction}")
+        if domain not in set(m["domain"] for m in self.vector_db.get()["metadatas"]):
+            raise ValueError(f"Invalid domain: {domain}")
+        
+        @tool(response_format="content_and_artifact")
+        def _retrieve_doc(query:str) -> tuple:
+            """
+                Query documents from the user's question.
+                Args:
+                    query: The user's question or search query.
+                    jurisdiction: The jurisdiction to filter by.
+                    domain: The domain to filter by.
+                Returns:
+                    A tuple of (serialized text, list of Document objects).
+            """
+            try:
+                self.small2big_retriever.vectorstore.search_kwargs = {
+                    "filter": {
+                        "$and": [
+                            {"jurisdiction": {"$eq": jurisdiction}},
+                            {"domain": {"$eq": domain}}
+                        ]
+                    }
                 }
-            }
+                
+                retrieved_docs = self.small2big_retriever.invoke(query)
+                serialized = "\n\n".join(
+                    f"Source: {doc.metadata}\nContent: {doc.page_content}"
+                    for doc in retrieved_docs
+                )
+                return serialized, retrieved_docs
+            except Exception as e:
+                print(f"Error during document retrieval: {e}")
+                return "An error occurred while retrieving documents.", []
             
-            retrieved_docs = self.small2big_retriever.invoke(query)
-            serialized = "\n\n".join(
-                f"Source: {doc.metadata}\nContent: {doc.page_content}"
-                for doc in retrieved_docs
-            )
-            return serialized, retrieved_docs
-        except Exception as e:
-            print(f"Error during document retrieval: {e}")
-            return "An error occurred while retrieving documents.", []
+        return _retrieve_doc
     
     def get_system_prompt(self, jurisdiction, domain):
         return system_prompt.format(jurisdiction=jurisdiction, domain=domain) + output_format
-      
+    
+    def parse_response(self, response):
+        try:
+            clean = re.sub(r"```json|```", "", response).strip()
+            if not clean.endswith("}"):
+                clean += "}"
+            return json.loads(clean)
+        except Exception as e:
+            print(f"Error parsing response: {e}")
+            return None
+        
     def build_legal_agent(self, jurisdiction, domain):
         # build the RAG agent with the LLM, retrieval tools, and system prompt
+        retrieve_doc = self.get_retrieved_docs(jurisdiction, domain)
+        print(f"-> [build_legal_agent]: tool={retrieve_doc}")
         return create_agent(
             model=self.llm_model,
-            tools=[self.retrieve_doc],
+            tools=[retrieve_doc],
             system_prompt=self.get_system_prompt(jurisdiction, domain)
         )
         
@@ -255,28 +275,29 @@ class RagController:
             print(f"-> [ask]: Tokens | Total: {t1['total_tokens']}")
         
         if response and "messages" in response:
-            return final_ans.content
-        return "No response"
+            return self.parse_response(final_ans.content)
+        return None
     
     def _test(self):
         print("\n" + "="*50)
         print("🚀 STARTING RAG CONTROLLER TEST")
         print("="*50)
         
-        print("\n⚙️  STEP 1: Ingesting Documents...")
-        try:
-            self.ingest_legal_docs()
-        except Exception as e:
-            print(f"❌ Ingestion failed: {e}")
-            return
+        # print("\n⚙️  STEP 1: Ingesting Documents...")
+        # try:
+        #     self.ingest_legal_docs()
+        # except Exception as e:
+        #     print(f"❌ Ingestion failed: {e}")
+        #     return
         
         print("\n🤖 STEP 2: Testing the LLM Agent...")
         
         # Test parameters that match the expected folder/file structure
-        test_jurisdiction = "VietNam"
+        test_jurisdiction = "Vietnam"
+        #test_domain = "Enterprise Law"
         test_domain = "AI Law"
-        #test_question = "Khi nào hệ thống trí tuệ nhân tạo bị coi là rủi ro cao ?"
-        test_question = "Đất nước cuba nằm ở đâu?"
+        test_question = "Khi nào hệ thống trí tuệ nhân tạo bị coi là rủi ro cao ?"
+        #test_question = "Đất nước cuba nằm ở đâu?"
         try:
             agent = self.build_legal_agent(test_jurisdiction, test_domain)
             response = self.ask(
