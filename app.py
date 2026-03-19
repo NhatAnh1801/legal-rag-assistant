@@ -1,7 +1,4 @@
-import os
-import shutil
 import streamlit as st
-import tempfile
 
 from src.rag_engine import RagController
 
@@ -65,6 +62,12 @@ with st.sidebar:
     st.session_state.jurisdiction = selected_jurisdiction
     st.session_state.domain = selected_domain
 
+    if (st.session_state.get("current_jurisdiction") != selected_jurisdiction or st.session_state.get("current_domain") != selected_domain):
+        st.session_state.agent = st.session_state.rag_controller.build_legal_agent(selected_jurisdiction, selected_domain)
+        
+        st.session_state.current_jurisdiction = selected_jurisdiction
+        st.session_state.current_domain = selected_domain
+    
     st.info(
         f"**Targeting:**\n"
         f"{selected_domain}\n"
@@ -106,9 +109,8 @@ if question:
                 
                 try:
                     response = st.session_state.rag_controller.ask(
-                        question=question, 
-                        jurisdiction=st.session_state.jurisdiction,
-                        domain=st.session_state.domain,
+                        agent = st.session_state.agent,
+                        question=question,
                         history=history
                     )
                 except Exception as e:

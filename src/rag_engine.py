@@ -10,6 +10,7 @@ from langchain_core.tools import tool
 from dotenv import load_dotenv
 
 from src.models.embeddings.gte_multi_base import GTE
+from src.prompt import*
 
 import os
 import requests
@@ -34,16 +35,19 @@ class RagController:
             
         self.embedding_model = GTE()
         
-        self.model = init_chat_model(
+        self.llm_model = init_chat_model(
             "google_genai:gemini-flash-lite-latest",
             api_key=self.GEMINI_API_KEY
         )
         
-        # INIT DATABASE
+        # Init Chroma as vector database
         self.vector_db = Chroma(
             embedding_function=self.embedding_model,
             persist_directory='./data/chromadb'    
         )
+        
+        # Init tool_call
+        self.retrieve_doc = tool(response_format="content_and_artifact")(self._retrieve_doc)
         
         # INIT SMALL2BIG
         self.small2big_retriever = None
@@ -162,70 +166,49 @@ class RagController:
         except Exception as e:
             print(f"Ingestion failed: {e}")
             raise
-        
-    def ask(self, question, jurisdiction, domain, history=None, max_turns=5):
-        @tool(response_format="content_and_artifact")
-        def retrieve_doc(query:str) -> tuple:
-            """
+
+    def _retrieve_doc(self, query: str, jurisdiction: str, domain: str) -> tuple:
+        """
             Query documents from the user's question.
             Args:
                 query: The user's question or search query.
+                jurisdiction: The jurisdiction to filter by.
+                domain: The domain to filter by.
             Returns:
                 A tuple of (serialized text, list of Document objects).
-            """
-            try:
-                self.small2big_retriever.vectorstore.search_kwargs = {
-                    "filter": {
-                        "$and": [
-                            {"jurisdiction": {"$eq": jurisdiction}},
-                            {"domain": {"$eq": domain}}
-                        ]
-                    }
-                }
-                
-                retrieved_docs = self.small2big_retriever.invoke(query)
-                serialized = "\n\n".join(
-                    f"Source: {doc.metadata}\nContent: {doc.page_content}"
-                    for doc in retrieved_docs
-                )
-                return serialized, retrieved_docs
-            except Exception as e:
-                print(f"Error during document retrieval: {e}")
-                return "An error occurred while retrieving documents.", []
-        
-        system_prompt = f"""You are an expert Legal AI Assistant specializing in {jurisdiction} law, specifically within the {domain} domain.
-        ## Context
-        - You will receive a conversation history followed by the user's current legal question.
-        - You MUST answer the question accurately based ONLY on the provided legal documents.
-        - You have access to specialized tool_call actions, which should be leveraged to retrieve relevant documents and evidence necessary for answering user questions.
-        
-        ## Message Format
-        You will receive messages in this order:
-        - Previous conversation turns (for context)
-        - The current user question (LAST message) -> this is what you need to answer    
-        
-        ## Constraint
-        - Whenever you need to reference or search legal information in order to answer the user's question, you MUST use the retrieve_doc tool to retrieve the relevant documents first.
-        - If the retrieved documents do not contain relevant information to answer the question, clearly state: "I couldn't find this information in the {jurisdiction}: {domain} documents."
-        - If no documents are retrieved, clearly respond: "Sorry, I don't have information regarding legal matters in the {jurisdiction}: {domain} documents."
-        - Do not fabricate laws, precedents, or rely on external knowledge outside the provided documents.
-        
-        ## Output format
-        Strictly follow this output format:
-        ```
-        From my legal database, my answer is:
-        [INSERT YOUR ANSWER HERE]
-        ```
         """
-        
-        tools = [retrieve_doc]
-        
-        agent = create_agent(
-            model=self.model,
-            tools=tools,
-            system_prompt=system_prompt
+        try:
+            self.small2big_retriever.vectorstore.search_kwargs = {
+                "filter": {
+                    "$and": [
+                        {"jurisdiction": {"$eq": jurisdiction}},
+                        {"domain": {"$eq": domain}}
+                    ]
+                }
+            }
+            
+            retrieved_docs = self.small2big_retriever.invoke(query)
+            serialized = "\n\n".join(
+                f"Source: {doc.metadata}\nContent: {doc.page_content}"
+                for doc in retrieved_docs
+            )
+            return serialized, retrieved_docs
+        except Exception as e:
+            print(f"Error during document retrieval: {e}")
+            return "An error occurred while retrieving documents.", []
+    
+    def get_system_prompt(self, jurisdiction, domain):
+        return system_prompt.format(jurisdiction=jurisdiction, domain=domain) + output_format
+      
+    def build_legal_agent(self, jurisdiction, domain):
+        # build the RAG agent with the LLM, retrieval tools, and system prompt
+        return create_agent(
+            model=self.llm_model,
+            tools=[self.retrieve_doc],
+            system_prompt=self.get_system_prompt(jurisdiction, domain)
         )
         
+    def ask(self, agent, question, history=None, max_turns=5):
         messages = []
         if history:
             max_messages = max_turns * 2
@@ -244,64 +227,61 @@ class RagController:
             response = chunk
 
         messages = response["messages"]
+        # Debugging section
+        human_msg = messages[0]
+        final_ans = messages[-1]
 
-        # Extract key messages
-        human_msg   = messages[0]
-        tool_call   = messages[1]  # AIMessage with function_call
-        tool_result = messages[2]  # ToolMessage with retrieved docs
-        final_ans   = messages[-1] # Final AIMessage
-
-        # ─── Query ────────────────────────────────────────────
         print(f"-> [ask]: Query: {human_msg.content}")
 
-        # ─── Retrieval ────────────────────────────────────────
-        print(f"-> [ask]: Retrieved {len(tool_result.artifact)} chunks | "
-            f"Sources: {set(d.metadata['source'] for d in tool_result.artifact)} | "
-            f"Pages: {[d.metadata['page'] for d in tool_result.artifact]}")
+        has_tool_call = len(messages) >= 3  # Not docs based questions
 
-        # ─── Token Usage ──────────────────────────────────────
-        t1 = tool_call.usage_metadata
-        t2 = final_ans.usage_metadata
-        print(f"-> [ask]: Tokens | "
-            f"Call 1: {t1['total_tokens']} | "
-            f"Call 2: {t2['total_tokens']} | "
-            f"Total: {t1['total_tokens'] + t2['total_tokens']}")
+        if has_tool_call:
+            tool_call   = messages[1]
+            tool_result = messages[2]
+
+            print(f"-> [ask]: Retrieved {len(tool_result.artifact)} chunks | "
+                f"Sources: {set(d.metadata['source'] for d in tool_result.artifact)} | "
+                f"Pages: {[d.metadata['page'] for d in tool_result.artifact]}")
+
+            t1 = tool_call.usage_metadata
+            t2 = final_ans.usage_metadata
+            print(f"-> [ask]: Tokens | "
+                f"Call 1: {t1['total_tokens']} | "
+                f"Call 2: {t2['total_tokens']} | "
+                f"Total: {t1['total_tokens'] + t2['total_tokens']}")
+        else:
+            print(f"-> [ask]: No tool call (general questions)")
+            t1 = final_ans.usage_metadata
+            print(f"-> [ask]: Tokens | Total: {t1['total_tokens']}")
         
         if response and "messages" in response:
-            return response["messages"][-1].content
+            return final_ans.content
         return "No response"
-        
+    
     def _test(self):
         print("\n" + "="*50)
         print("🚀 STARTING RAG CONTROLLER TEST")
         print("="*50)
         
-        # 2. Run the ingestion pipeline
         print("\n⚙️  STEP 1: Ingesting Documents...")
         try:
             self.ingest_legal_docs()
         except Exception as e:
             print(f"❌ Ingestion failed: {e}")
             return
-
-        # 3. Test the Agent Query
+        
         print("\n🤖 STEP 2: Testing the LLM Agent...")
         
         # Test parameters that match the expected folder/file structure
         test_jurisdiction = "VietNam"
         test_domain = "AI Law"
-        test_question = "Khi nào hệ thống trí tuệ nhân tạo bị coi là rủi ro cao ?"
-        
-        print(f"   Jurisdiction: {test_jurisdiction}")
-        print(f"   Domain:       {test_domain}")
-        print(f"   Question:     {test_question}")
-        print("\nThinking...")
-
+        #test_question = "Khi nào hệ thống trí tuệ nhân tạo bị coi là rủi ro cao ?"
+        test_question = "Đất nước cuba nằm ở đâu?"
         try:
+            agent = self.build_legal_agent(test_jurisdiction, test_domain)
             response = self.ask(
                 question=test_question,
-                jurisdiction=test_jurisdiction,
-                domain=test_domain
+                agent=agent
             )
             
             print("\n" + "="*50)
@@ -322,6 +302,6 @@ def check_connection():
     )
     print(response.text)
         
-# if __name__ == "__main__":
-#     rag = RagController()
-#     rag._test_process_pdf()
+if __name__ == "__main__":
+    rag = RagController()
+    rag._test()
