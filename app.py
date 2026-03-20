@@ -1,100 +1,89 @@
-import os
-import shutil
 import streamlit as st
-import tempfile
+import time
 
 from src.rag_engine import RagController
-
-MAX_FILE_SIZE_MB = 10
-MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024 
-
+# --- 1. App Configuration ---
 st.set_page_config(
-    page_title="RAG Chatbot",
-    page_icon="🤖",
+    page_title="Legal AI Assistant",
+    page_icon="⚖️",
     layout="wide",
 )
 
-# --- Session: Store user state ---
+# --- Define the Knowledge Hierarchy ---
+# This dictionary maps the jurisdiction to its specific legal domains.
+LEGAL_HIERARCHY = {
+    "Vietnam": [
+        "AI law", 
+        "Labor Law", 
+        "Enterprise Law",
+        "Civil Law"
+    ],
+    "United States": [
+        "Civil Procedure"
+    ]
+}
+
+# --- 2. Session State Initialization ---
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Hello! Upload a document and ask me anything about it."}
+        {"role": "assistant", "content": "Hello! I am your Legal AI Assistant. Please select your jurisdiction and legal domain to begin."}
     ]
 
-if "uploaded_files" not in st.session_state:
-    st.session_state.uploaded_files = []
-    
-if "deleted_files" not in st.session_state:
-    st.session_state.deleted_files = set()
-    
+t0 = time.perf_counter()
 if "rag_controller" not in st.session_state:
-        st.session_state.rag_controller = RagController()
-
-with st.sidebar:
-    st.header("Upload document")
+    st.session_state.rag_controller = RagController()
     
-    uploaded = st.file_uploader(
-        "Upload your documents",
-        type=["pdf"],
-        accept_multiple_files=True,
-        key="file_uploader",
+    with st.spinner("📚 Loading server... This may take a moment."):
+        st.session_state.rag_controller.ingest_legal_docs()
+t1 = time.perf_counter()
+print(f"-> [App Init]: RAG Controller initialized and documents ingested in {t1 - t0: .4f} seconds")
+
+# --- 3. Sidebar: Database Info & Controls ---
+with st.sidebar:
+    st.header("⚖️ Legal Database Info")
+    
+    # 1st Dropdown: Jurisdiction Selector
+    selected_jurisdiction = st.selectbox(
+        "🌐 Select Jurisdiction",
+        options=list(LEGAL_HIERARCHY.keys()),
+        index=0,
     )
     
-    if uploaded:
-        for file in uploaded:
-            # Avoid re-processing files already stored
-            if file.name in st.session_state.deleted_files:
-                continue
-            existing_names = [f["name"] for f in st.session_state.uploaded_files]
-            if file.name not in existing_names:
-                file_data = {
-                    "name": file.name,
-                    "type": file.type,
-                    "size": file.size
-                }
-                st.session_state.uploaded_files.append(file_data)
-                try:
-                    with st.spinner('Importing and processing file...'):
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file_data["name"])[1]) as tmp_file:
-                            file.seek(0)
-                            shutil.copyfileobj(file, tmp_file)
-                            tmp_file_path = tmp_file.name
-                            print(f'file is saved in {tmp_file_path}')
-                            
-                        # Backend Logic
-                        try:
-                            st.session_state.rag_controller.index_data(tmp_file_path)
-                        finally:
-                            if os.path.exists(tmp_file_path):
-                                os.remove(tmp_file_path)
-                        
-                except Exception as e:
-                    st.error(f'Error processing file: {e}') 
-                
-                
-    if st.session_state.uploaded_files:
-        st.divider()  # draws a horizontal line
-        st.subheader("Uploaded Files")
-        for i, file in enumerate(st.session_state.uploaded_files):
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.text(f"📎 {file['name']}")
-            with col2:
-                if st.button("🗑️", key=f"del_{i}"):
-                    st.session_state.deleted_files.add(file["name"])
-                    st.session_state.uploaded_files.pop(i)
-                    st.rerun()  
-    else:
-        st.info("No documents uploaded yet.")
+    # 2nd Dropdown: Domain Selector (Updates dynamically based on the 1st dropdown)
+    selected_domain = st.selectbox(
+        "📚 Select Legal Domain",
+        options=LEGAL_HIERARCHY[selected_jurisdiction],
+        index=0,
+        help="Narrows the search down to a specific field of law."
+    )
+    
+    # Store selections in session state
+    st.session_state.jurisdiction = selected_jurisdiction
+    st.session_state.domain = selected_domain
+
+    if (st.session_state.get("current_jurisdiction") != selected_jurisdiction or st.session_state.get("current_domain") != selected_domain):
+        st.session_state.agent = st.session_state.rag_controller.build_legal_agent(selected_jurisdiction, selected_domain)
         
+        st.session_state.current_jurisdiction = selected_jurisdiction
+        st.session_state.current_domain = selected_domain
+    
+    st.info(
+        f"**Targeting:**\n"
+        f"{selected_domain}\n"
+        f"from {selected_jurisdiction} law\n\n"
+        "The assistant will filter the database to match these criteria."
+    )
+    
     st.divider()
     
     if st.button("🗑️ Clear Chat", use_container_width=True):
         st.session_state.messages = [
-            {"role": "assistant", "content": "Hello! Upload a document and ask me anything about it."}
+            {"role": "assistant", "content": f"Ready to answer questions regarding {st.session_state.jurisdiction} - {st.session_state.domain}."}
         ]
         st.rerun()
-        
-st.title("RAG Chatbot")
+
+# --- 4. Main Chat Interface ---
+st.title("🏛️ Legal Counsel RAG")
 
 chat_container = st.container()
 
@@ -103,22 +92,39 @@ with chat_container:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             
-            
-# --- Chat input ---
-prompt = st.chat_input("Ask a question about your documents...")
-if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
+# --- 5. Chat Input & Processing ---
+question = st.chat_input(f"Ask a question about {selected_domain}...")
+
+if question:
+    st.session_state.messages.append({"role": "user", "content": question})
     with chat_container:
         with st.chat_message("user"):
-            st.markdown(prompt)
+            st.markdown(question)
 
     with chat_container:
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
+            with st.spinner(f"Thinking..."):
                 history = st.session_state.messages[1:]
-                response = ""
-                #response = st.session_state.rag_controller.ask(prompt, history)
-            st.markdown(response)
+                response = None
+                
+                try:
+                    raw_response = st.session_state.rag_controller.ask(
+                        agent = st.session_state.agent,
+                        question=question,
+                        history=history
+                    )
+                    response = raw_response["answer"]
+                    type = raw_response["type"]
+                    source = raw_response["source"]
+                    page = raw_response["page"]
+                except Exception as e:
+                    if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                        response = "⚠️ API rate limit reached. Please wait a moment and try again."
+                    else:
+                        response = f"An error occurred: {str(e)}"
+                    
+                st.markdown(response)
+                if type == "document_based":
+                    st.caption(f"📄 Source: `{source}` | Page: {page}")
 
     st.session_state.messages.append({"role": "assistant", "content": response})
-    st.rerun()

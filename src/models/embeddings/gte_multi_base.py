@@ -60,7 +60,7 @@ class GTE(Embeddings):
             torch.cuda.empty_cache()
         return self._embedding([text])[0]
     
-    def find_optimal_batch_size(self, max_test_batch: int=256):
+    def _find_optimal_batch_size(self, max_test_batch: int=256):
             """
                 Stress test to identify the maximum safe batch_size on the GPU
                 and plot the throughput to find the optimal performance sweet spot.

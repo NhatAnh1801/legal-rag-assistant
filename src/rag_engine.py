@@ -1,134 +1,81 @@
+import json
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_classic.retrievers import ParentDocumentRetriever
-from langchain_docling.loader import DoclingLoader
-from docling.document_converter import DocumentConverter
-from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions, AcceleratorDevice, EasyOcrOptions, AcceleratorOptions
-from docling.document_converter import PdfFormatOption
-from langchain_community.vectorstores.utils import filter_complex_metadata
-from langchain_community.document_loaders import PyMuPDFLoader
-
-from langchain_classic.storage import InMemoryStore
+from langchain_core.documents import Document
+from langchain_classic.storage import LocalFileStore, create_kv_docstore
 from langchain_chroma import Chroma
 
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain_core.tools import tool
-
-from models.embeddings.gte_multi_base import GTE
 from dotenv import load_dotenv
 
-import os
-import fitz
-import time
-import torch
+from src.models.embeddings.gte_multi_base import GTE
+from src.prompt import*
 
-load_dotenv()
+import os
+import requests
+import time
+import re       
+
+load_dotenv()   
+
+# DECLARE VARIABLES
+PARENT_CHUNK_SIZE = 1000
+CHILD_CHUNK_SIZE = 200
+CLOUDFLARE_URL= os.getenv("CLOUDFLARE_URL")
+
 class RagController:
     def __init__(self):
         '''
             Init vector DB and LLM here
         '''
-        self.GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-        if not self.GEMINI_API_KEY:
+        # INIT MODELS
+        GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+        if not GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY environment variable is not set")
             
         self.embedding_model = GTE()
         
+        google_model = "google_genai:gemini-flash-lite-latest"
+        #google_model = "google_genai:gemini-2.0-flash-lite"
+        self.llm_model = init_chat_model(
+            model=google_model,
+            api_key=GEMINI_API_KEY
+        )
+        
+        # Init Chroma as vector database
         self.vector_db = Chroma(
             embedding_function=self.embedding_model,
             persist_directory='./data/chromadb'    
         )
-        self.small2big_retriever = None
         
-        self.store = InMemoryStore()    # Store in RAM (will be replaced in the future)
-        
-        self.model = init_chat_model(
-            "google_genai:gemini-flash-lite-latest",
-            api_key=self.GEMINI_API_KEY
+        # INIT SMALL2BIG
+        parent_splitter = RecursiveCharacterTextSplitter(
+            chunk_size = PARENT_CHUNK_SIZE,
+            length_function = len,
+            chunk_overlap=200,
+            separators=["\n\n", "\n", " ", ""]
         )
         
-    def is_text_extractable(self, docs, threshold=200):
-            '''
-                Checks if the extracted documents have enough text per page.
-            '''
-            if not docs:
-                return False
-                
-            try:
-                total_chars = sum(len(d.page_content) for d in docs)
-                avg_chars = total_chars / len(docs)
-                return avg_chars > threshold
-            
-            except Exception as e:
-                print(f"Error checking text length: {e}")
-                return False
-        
-    def load_and_process_pdf(self, file_path):
-        '''
-            Load the pdf file content and process it
-            Args:
-                file_path: Path to the pdf file
-            Returns:
-                Text content 
-        '''
-        print(f"--> [TIMING] Attempting PyMuPDF extraction on {file_path}...")
-        start_pymupdf = time.perf_counter()
-        
-        try:
-            loader = PyMuPDFLoader(file_path)
-            docs = loader.load()
-        except Exception as e:
-            print(f"PyMuPDF failed completely: {e}")
-            docs = []
-        
-        end_pymupdf = time.perf_counter()
-            
-        if self.is_text_extractable(docs):
-            print(f"--> [SUCCESS] Native PDF detected. Extraction finished in {end_pymupdf - start_pymupdf:.4f} seconds.")
-            return docs
-        
-        # Fallback: Using OCR for scanned PDF file
-        use_gpu = torch.cuda.is_available()
-        print(f"GPU Available for OCR: {use_gpu}")
-        device = AcceleratorDevice.CUDA if use_gpu else AcceleratorDevice.CPU
-        
-        pipeline_options = PdfPipelineOptions(
-            allow_external_plugins=True,
-            do_ocr = True,
-            accelerator_options = AcceleratorOptions(device=device)
-            )
-        
-        pipeline_options.ocr_options = EasyOcrOptions(
-            lang=["vi", "en"],
+        child_splitter = RecursiveCharacterTextSplitter(
+            chunk_size = CHILD_CHUNK_SIZE,
+            length_function = len,
+            chunk_overlap=50,
+            separators=["\n\n", "\n", " ", ""]
         )
         
-        converter = DocumentConverter(
-            format_options={
-                InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
-            }
+        fs = LocalFileStore("./data/docstore") 
+        
+        self.small2big_retriever = ParentDocumentRetriever(
+            vectorstore=self.vector_db,
+            docstore=create_kv_docstore(fs),
+            child_splitter=child_splitter,
+            parent_splitter=parent_splitter,
+            search_kwargs={"k": 2}
         )
         
-        loader = DoclingLoader(file_path, converter=converter)
-        
-        docs = []
-        
-        try:
-            print(f"--> [TIMING] Scanned PDF detected. Starting Docling OCR on {file_path}. This may take a while...")
-            start_ocr = time.perf_counter()
-            
-            doc_iter = loader.lazy_load()
-            for doc in doc_iter:
-                docs.append(doc)
-                
-            end_ocr = time.perf_counter()
-            print(f"--> [TIMING] Docling OCR finished in {end_ocr - start_ocr:.4f} seconds.")
-        except Exception as e:
-            print(f"Error loading document(s) from {file_path}: {e}")
-            
-        return docs
-    
-    def ingest_docs(self, docs: list, parent_chunk_size: int = 1000, child_chunk_size: int=200, batch_size = 200):
+    def ingest_docs(self, docs: list, batch_size = 200):
         """
         Chunk documents using a hierarchical "small-to-big" approach for optimized retrieval.
         Note:
@@ -139,90 +86,161 @@ class RagController:
             -> Set batch_size to 150-200 is the sweet spot
         This ensures stable ingestion and efficient use of system resources.
         """
-        parent_splitter = RecursiveCharacterTextSplitter(
-            chunk_size = parent_chunk_size,
-            length_function = len,
-            chunk_overlap=200,
-            separators=["\n\n", "\n", " ", ""]
+        if not docs:
+            return
+        
+        # Check duplicate documents in the vector database
+        existing = self.vector_db.get()
+        ingested_keys = set(
+            (m["source"], m["page"]) for m in existing["metadatas"]
         )
+        new_docs = [
+            d for d in docs
+            if (d.metadata.get("source"), d.metadata.get("page")) not in ingested_keys
+        ]
         
-        child_splitter = RecursiveCharacterTextSplitter(
-            chunk_size = child_chunk_size,
-            length_function = len,
-            chunk_overlap=50,
-            separators=["\n\n", "\n", " ", ""]
-        )
+        skipped = len(docs) - len(new_docs)
+        if skipped:
+            print(f"-> [ingest_docs]: Skipping {skipped} already ingested pages")
+
+        if not new_docs:
+            print(f"-> [ingest_docs]: All documents already ingested, skipping...")
+            return
         
-        self.small2big_retriever = ParentDocumentRetriever(
-            vectorstore=self.vector_db,
-            docstore=self.store,
-            child_splitter=child_splitter,
-            parent_splitter=parent_splitter
-        )
-        
-        print(f"--> [TIMING] Starting embedding generation and ChromaDB ingestion for {len(docs)} documents...")
-        
-        start_embed = time.perf_counter()
-        # Add data top retriever
-        
-        for i in range(0, len(docs), batch_size):
-            batch = docs[i : i + batch_size]
+        for i in range(0, len(new_docs), batch_size):
+            batch = new_docs[i : i + batch_size]
             self.small2big_retriever.add_documents(batch)
+            
+    def ingest_legal_docs(self):
+        try:
+            response = requests.get(
+                f"{CLOUDFLARE_URL}/ingest",
+                timeout=180
+            )
+            
+            response.raise_for_status()
+            data = response.json()
+            
+            if data["status"] != "ok":
+                raise RuntimeError(data.get("message", "Unknown error"))
+            
+            documents = data["documents"]
+            print(f"-> [ingest_legal_docs]: Received {len(documents)} documents")
+            
+            all_docs = []
+            for document in data["documents"]:
+                jurisdiction_meta = document["jurisdiction"]
+                domain_meta = document["domain"]
+                source = document["source"]
+                
+                print(f"Ingesting: {jurisdiction_meta} -> {domain_meta}")
+                
+                # Wrap pages into LangChain Documents
+                docs = [
+                    Document(
+                        page_content=page_text,
+                        metadata={
+                            "jurisdiction": jurisdiction_meta,
+                            "domain": domain_meta,
+                            "source": source,
+                            "page": i
+                        }
+                    )
+                    for i, page_text in enumerate(document["pages"])
+                    if page_text.strip() 
+                ]
+                all_docs.extend(docs)
+                
+            # Send to ChromaDB
+            t0 = time.perf_counter()
+            self.ingest_docs(all_docs)
+            t1 = time.perf_counter()
+            print(f"-> [ingest_legal_docs]: all docs are ingested in {t1 - t0: .4f}")
+                
+        except requests.exceptions.ConnectionError:
+            print("ERROR: Cannot reach Colab. Is the tunnel still running?")
+            raise
+        except requests.exceptions.Timeout:
+            print("-> [ingest_legal_docs]: Request timed out after 1 hour")
+            raise
+        except Exception as e:
+            print(f"Ingestion failed: {e}")
+            raise
+
+    def get_retrieved_docs(self, jurisdiction: str, domain: str):
+        # Verify if the jurisdiction and domain are valid
+        if jurisdiction not in set(m["jurisdiction"] for m in self.vector_db.get()["metadatas"]):
+            raise ValueError(f"Invalid jurisdiction: {jurisdiction}")
+        if domain not in set(m["domain"] for m in self.vector_db.get()["metadatas"]):
+            raise ValueError(f"Invalid domain: {domain}")
         
-        end_embed = time.perf_counter()
-        print(f"--> [TIMING] Embedding and ingestion finished in {end_embed - start_embed:.4f} seconds.")
-          
-    def index_data(self, file_path):
-        file_content = self.load_and_process_pdf(file_path)
-        clean_docs = filter_complex_metadata(file_content)
-        for idx, doc in enumerate(clean_docs[:5], 1):
-            print(f'Doc {idx} page content:\n{doc.page_content}\n{"-" * 50}')
-        self.ingest_docs(clean_docs)
-        
-        return len(clean_docs)
-    
-    def ask(self, question, history=None, max_turns=5):
         @tool(response_format="content_and_artifact")
         def retrieve_doc(query:str) -> tuple:
             """
-            Search the vector database for documents relevant to the user's question.
-            Args:
-                query: The user's question or search query.
-            Returns:
-                A tuple of (serialized text, list of Document objects).
+                Query documents from the user's question.
+                Args:
+                    query: The user's question or search query.
+                    jurisdiction: The jurisdiction to filter by.
+                    domain: The domain to filter by.
+                Returns:
+                    A tuple of (serialized text, list of Document objects).
             """
-            retrieved_docs  = self.small2big_retriever.invoke(query)
-            serialized = "\n\n".join(
-            (f"Source: {doc.metadata}\nContent: {doc.page_content}")
-                for doc in retrieved_docs
-            )
-            return serialized, retrieved_docs
+            try:
+                self.small2big_retriever.vectorstore.search_kwargs = {
+                    "filter": {
+                        "$and": [
+                            {"jurisdiction": {"$eq": jurisdiction}},
+                            {"domain": {"$eq": domain}}
+                        ]
+                    }
+                }
+                
+                retrieved_docs = self.small2big_retriever.invoke(query)
+                serialized = "\n\n".join(
+                    f"Source: {doc.metadata}\nContent: {doc.page_content}"
+                    for doc in retrieved_docs
+                )
+                return serialized, retrieved_docs
+            except Exception as e:
+                print(f"Error during document retrieval: {e}")
+                return "An error occurred while retrieving documents.", []
+            
+        return retrieve_doc
+    
+    def get_system_prompt(self, jurisdiction, domain):
+        return system_prompt.format(jurisdiction=jurisdiction, domain=domain)
+    
+    def parse_response(self, response):
+        try:
+            clean = re.sub(r"```json|```", "", response).strip()
+            if not clean.endswith("}"):
+                clean += "}"
+            return json.loads(clean)
+        except Exception as e:
+            print(f"Error parsing response: {e}")
+            return None
         
-        doc_count = self.vector_db._collection.count()
-        
-        system_prompt = f"""You are a helpful assistant with access to a document retrieval tool
-        ## Context
-        - The user has uploaded documents to a knowledge base ({doc_count} chunks indexed).
-        - You will receive a conversation history followed by the user's current question.
-        
-        ## Message Format
-        You will receive messages in this order:
-        - Previous conversation turns (for context)
-        - The current user question (LAST message) — this is what you need to answer    
-        
-        ## Constraint
-        - retrieve_doc tool to search the knowledge base FIRST, then answer based on what you find.
-        - If the retrieved documents do not contain relevant information to answer the question, clearly state: "I couldn't find this information in the uploaded documents." Do not fabricate answers or rely on external knowledge outside the provided documents.
-        """
-        
-        tools = [retrieve_doc]
-        
-        agent = create_agent(
-            model=self.model,
-            tools=tools,
-            system_prompt=system_prompt
+    def build_legal_agent(self, jurisdiction, domain):
+        # build the RAG agent with the LLM, retrieval tools, and system prompt
+        retrieve_doc = self.get_retrieved_docs(jurisdiction, domain)
+        return create_agent(
+            model=self.llm_model,
+            tools=[retrieve_doc],
+            system_prompt=self.get_system_prompt(jurisdiction, domain)
         )
-        
+     
+    def _extract_source_info(self, messages):
+        for msg in messages:
+            if msg.type == "tool" and msg.name == "retrieve_doc":
+                if hasattr(msg, 'artifact') and msg.artifact:
+                    doc = msg.artifact[0]
+                    return {
+                        "source": doc.metadata.get("source"),
+                        "page": doc.metadata.get("page")
+                    }
+        return None
+            
+    def ask(self, agent, question, history=None, max_turns=5):
         messages = []
         if history:
             max_messages = max_turns * 2
@@ -238,38 +256,75 @@ class RagController:
         
         response = None
         for chunk in agent.stream(input=inputs, stream_mode="values"):
-            response = chunk
+            response = chunk    
+            print(f"-> [ask]: Received chunk: {chunk}")
 
-        if response and "messages" in response:
-            return response["messages"][-1].content
-        return "No response"
+        messages = response["messages"]
+        final_ans = messages[-1].content
         
-    def test(self):
-        # Test the retrieve_doc function
-        #test_file = r"D:\Pycharm projects\RAG_agent\src\congress.pdf"
-        test_file = r"D:\Pycharm projects\RAG_agent\src\tri_tue_nhan_tao.pdf"
-        query = "what is author name?"
-        if os.path.exists(test_file):
-            try:
-
-                # Time the indexing step
-                start_index = time.perf_counter()
-                num_docs = self.index_data(test_file)
-                end_index = time.perf_counter()
-                print(f"Successfully indexed {num_docs} documents from {test_file} (Time taken: {end_index - start_index:.4f} seconds)")
-
-                # # Test asking a query and time it
-                # history = []
-                # start_ask = time.perf_counter()
-                # response = self.ask(query, history)
-                # end_ask = time.perf_counter()
-                # print(f'Query: {query}\nResponse: {response}')
-                # print(f"ask() function time taken: {end_ask - start_ask:.4f} seconds")
-            except Exception as e:
-                print(f"Error indexing file: {e}")
-        else:
-            print(f"Test file '{test_file}' not found")
+        print(f"-> [ask]: messages from agent:\n{messages}")
+        print(f"-> [ask]: Final answer content:\n{final_ans}")
+        
+        # Debug token usage
+        for msg in messages:
+            if hasattr(msg, 'usage_metadata') and msg.usage_metadata:
+                print(f"[{msg.type}] Tokens - input: {msg.usage_metadata.get('input_tokens')}, "
+                    f"output: {msg.usage_metadata.get('output_tokens')}, "
+                    f"total: {msg.usage_metadata.get('total_tokens')}")
+        
+        source_info = self._extract_source_info(messages)
+        return {
+            "type": "document_based" if source_info else "general",
+            "source": source_info.get("source") if source_info else None,
+            "page": source_info.get("page") if source_info else None,
+            "answer": final_ans
+        }
+    
+    def _test(self):
+        print("\n" + "="*50)
+        print("🚀 STARTING RAG CONTROLLER TEST")
+        print("="*50)
+        
+        # print("\n⚙️  STEP 1: Ingesting Documents...")
+        # try:
+        #     self.ingest_legal_docs()
+        # except Exception as e:
+        #     print(f"❌ Ingestion failed: {e}")
+        #     return
+        
+        print("\n🤖 STEP 2: Testing the LLM Agent...")
+        
+        # Test parameters that match the expected folder/file structure
+        test_jurisdiction = "Vietnam"
+        #test_domain = "Enterprise Law"
+        test_domain = "AI law"
+        test_question = "Khi nào hệ thống trí tuệ nhân tạo bị coi là rủi ro cao ?"
+        #test_question = "Đất nước cuba nằm ở đâu?"
+        try:
+            agent = self.build_legal_agent(test_jurisdiction, test_domain)
+            response = self.ask(
+                question=test_question,
+                agent=agent
+            )
             
-if __name__ == "__main__":
-    rag = RagController()
-    rag.test()
+            print("\n" + "="*50)
+            print("🎯 AGENT RESPONSE:")
+            print("="*50)
+            print(response)
+            
+        except Exception as e:
+            print(f"\n❌ Query failed: {e}")
+            
+    def _test_process_pdf(self):
+        self.ingest_legal_docs()
+        
+def check_connection():
+    response = requests.get(
+        f"{CLOUDFLARE_URL}/health",
+        timeout=60
+    )
+    print(response.text)
+        
+# if __name__ == "__main__":
+#     rag = RagController()
+#     rag._test()
