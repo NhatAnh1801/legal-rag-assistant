@@ -1,7 +1,7 @@
 import streamlit as st
+import time
 
 from src.rag_engine import RagController
-
 # --- 1. App Configuration ---
 st.set_page_config(
     page_title="Legal AI Assistant",
@@ -13,16 +13,14 @@ st.set_page_config(
 # This dictionary maps the jurisdiction to its specific legal domains.
 LEGAL_HIERARCHY = {
     "Vietnam": [
-        "Trí tuệ nhân tạo (AI Law)", 
-        "Lao động (Labor Law)", 
-        "Doanh nghiệp (Enterprise Law)",
-        "Dân sự (Civil Law)"
+        "AI law", 
+        "Labor Law", 
+        "Enterprise Law",
+        "Civil Law"
     ],
     "United States": [
-        "civil procedure"
-    ],
-    "United Kingdom": ["All", "Common Law", "Employment Law", "Company Law"],
-    "European Union": ["All", "GDPR/Data Privacy", "AI Act", "Competition Law"]
+        "Civil Procedure"
+    ]
 }
 
 # --- 2. Session State Initialization ---
@@ -31,8 +29,14 @@ if "messages" not in st.session_state:
         {"role": "assistant", "content": "Hello! I am your Legal AI Assistant. Please select your jurisdiction and legal domain to begin."}
     ]
 
+t0 = time.perf_counter()
 if "rag_controller" not in st.session_state:
     st.session_state.rag_controller = RagController()
+    
+    with st.spinner("📚 Loading server... This may take a moment."):
+        st.session_state.rag_controller.ingest_legal_docs()
+t1 = time.perf_counter()
+print(f"-> [App Init]: RAG Controller initialized and documents ingested in {t1 - t0: .4f} seconds")
 
 # --- 3. Sidebar: Database Info & Controls ---
 with st.sidebar:
@@ -99,26 +103,28 @@ if question:
 
     with chat_container:
         with st.chat_message("assistant"):
-            with st.spinner(f"Reviewing {selected_jurisdiction} > {selected_domain} documents..."):
+            with st.spinner(f"Thinking..."):
                 history = st.session_state.messages[1:]
+                response = None
                 
                 try:
-                    response = st.session_state.rag_controller.ask(
+                    raw_response = st.session_state.rag_controller.ask(
                         agent = st.session_state.agent,
                         question=question,
                         history=history
                     )
-                    if response["type"] == "document_based":
-                        st.markdown(response["answer"])
-                        st.caption(f"📄 Source: `{response['source']}` | Page: {response['page']}")
-                    elif response["type"] == "general":
-                        st.markdown(response["answer"])
-                    else:
-                        st.error("Invalid response type")
+                    response = raw_response["answer"]
+                    type = raw_response["type"]
+                    source = raw_response["source"]
+                    page = raw_response["page"]
                 except Exception as e:
-                    response = f"An error occurred while querying the database: {str(e)}"
-                
-            st.markdown(response)
+                    if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                        response = "⚠️ API rate limit reached. Please wait a moment and try again."
+                    else:
+                        response = f"An error occurred: {str(e)}"
+                    
+                st.markdown(response)
+                if type == "document_based":
+                    st.caption(f"📄 Source: `{source}` | Page: {page}")
 
     st.session_state.messages.append({"role": "assistant", "content": response})
-    st.rerun()

@@ -31,15 +31,17 @@ class RagController:
             Init vector DB and LLM here
         '''
         # INIT MODELS
-        self.GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-        if not self.GEMINI_API_KEY:
+        GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+        if not GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY environment variable is not set")
             
         self.embedding_model = GTE()
         
+        google_model = "google_genai:gemini-flash-lite-latest"
+        #google_model = "google_genai:gemini-2.0-flash-lite"
         self.llm_model = init_chat_model(
-            "google_genai:gemini-flash-lite-latest",
-            api_key=self.GEMINI_API_KEY
+            model=google_model,
+            api_key=GEMINI_API_KEY
         )
         
         # Init Chroma as vector database
@@ -69,7 +71,8 @@ class RagController:
             vectorstore=self.vector_db,
             docstore=create_kv_docstore(fs),
             child_splitter=child_splitter,
-            parent_splitter=parent_splitter
+            parent_splitter=parent_splitter,
+            search_kwargs={"k": 2}
         )
         
     def ingest_docs(self, docs: list, batch_size = 200):
@@ -115,7 +118,6 @@ class RagController:
                 timeout=180
             )
             
-            print(f"-> response: {response}")
             response.raise_for_status()
             data = response.json()
             
@@ -173,7 +175,7 @@ class RagController:
             raise ValueError(f"Invalid domain: {domain}")
         
         @tool(response_format="content_and_artifact")
-        def _retrieve_doc(query:str) -> tuple:
+        def retrieve_doc(query:str) -> tuple:
             """
                 Query documents from the user's question.
                 Args:
@@ -203,10 +205,10 @@ class RagController:
                 print(f"Error during document retrieval: {e}")
                 return "An error occurred while retrieving documents.", []
             
-        return _retrieve_doc
+        return retrieve_doc
     
     def get_system_prompt(self, jurisdiction, domain):
-        return system_prompt.format(jurisdiction=jurisdiction, domain=domain) + output_format
+        return system_prompt.format(jurisdiction=jurisdiction, domain=domain)
     
     def parse_response(self, response):
         try:
@@ -221,13 +223,23 @@ class RagController:
     def build_legal_agent(self, jurisdiction, domain):
         # build the RAG agent with the LLM, retrieval tools, and system prompt
         retrieve_doc = self.get_retrieved_docs(jurisdiction, domain)
-        print(f"-> [build_legal_agent]: tool={retrieve_doc}")
         return create_agent(
             model=self.llm_model,
             tools=[retrieve_doc],
             system_prompt=self.get_system_prompt(jurisdiction, domain)
         )
-        
+     
+    def _extract_source_info(self, messages):
+        for msg in messages:
+            if msg.type == "tool" and msg.name == "retrieve_doc":
+                if hasattr(msg, 'artifact') and msg.artifact:
+                    doc = msg.artifact[0]
+                    return {
+                        "source": doc.metadata.get("source"),
+                        "page": doc.metadata.get("page")
+                    }
+        return None
+            
     def ask(self, agent, question, history=None, max_turns=5):
         messages = []
         if history:
@@ -244,39 +256,29 @@ class RagController:
         
         response = None
         for chunk in agent.stream(input=inputs, stream_mode="values"):
-            response = chunk
+            response = chunk    
+            print(f"-> [ask]: Received chunk: {chunk}")
 
         messages = response["messages"]
-        # Debugging section
-        human_msg = messages[0]
-        final_ans = messages[-1]
-
-        print(f"-> [ask]: Query: {human_msg.content}")
-
-        has_tool_call = len(messages) >= 3  # Not docs based questions
-
-        if has_tool_call:
-            tool_call   = messages[1]
-            tool_result = messages[2]
-
-            print(f"-> [ask]: Retrieved {len(tool_result.artifact)} chunks | "
-                f"Sources: {set(d.metadata['source'] for d in tool_result.artifact)} | "
-                f"Pages: {[d.metadata['page'] for d in tool_result.artifact]}")
-
-            t1 = tool_call.usage_metadata
-            t2 = final_ans.usage_metadata
-            print(f"-> [ask]: Tokens | "
-                f"Call 1: {t1['total_tokens']} | "
-                f"Call 2: {t2['total_tokens']} | "
-                f"Total: {t1['total_tokens'] + t2['total_tokens']}")
-        else:
-            print(f"-> [ask]: No tool call (general questions)")
-            t1 = final_ans.usage_metadata
-            print(f"-> [ask]: Tokens | Total: {t1['total_tokens']}")
+        final_ans = messages[-1].content
         
-        if response and "messages" in response:
-            return self.parse_response(final_ans.content)
-        return None
+        print(f"-> [ask]: messages from agent:\n{messages}")
+        print(f"-> [ask]: Final answer content:\n{final_ans}")
+        
+        # Debug token usage
+        for msg in messages:
+            if hasattr(msg, 'usage_metadata') and msg.usage_metadata:
+                print(f"[{msg.type}] Tokens - input: {msg.usage_metadata.get('input_tokens')}, "
+                    f"output: {msg.usage_metadata.get('output_tokens')}, "
+                    f"total: {msg.usage_metadata.get('total_tokens')}")
+        
+        source_info = self._extract_source_info(messages)
+        return {
+            "type": "document_based" if source_info else "general",
+            "source": source_info.get("source") if source_info else None,
+            "page": source_info.get("page") if source_info else None,
+            "answer": final_ans
+        }
     
     def _test(self):
         print("\n" + "="*50)
@@ -295,7 +297,7 @@ class RagController:
         # Test parameters that match the expected folder/file structure
         test_jurisdiction = "Vietnam"
         #test_domain = "Enterprise Law"
-        test_domain = "AI Law"
+        test_domain = "AI law"
         test_question = "Khi nào hệ thống trí tuệ nhân tạo bị coi là rủi ro cao ?"
         #test_question = "Đất nước cuba nằm ở đâu?"
         try:
@@ -323,6 +325,6 @@ def check_connection():
     )
     print(response.text)
         
-if __name__ == "__main__":
-    rag = RagController()
-    rag._test()
+# if __name__ == "__main__":
+#     rag = RagController()
+#     rag._test()
