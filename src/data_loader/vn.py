@@ -1,0 +1,45 @@
+from .base import BaseDataLoader
+from huggingface_hub import snapshot_download
+
+import pandas as pd
+import duckdb
+import os
+
+VN_BASE_PATH = "./data/raw/vn/vietnamese_legal_documents"
+
+class VietnameseDataLoader(BaseDataLoader):
+    def __init__(self):
+        if not os.path.exists(VN_BASE_PATH):
+            self.download()
+    
+    def download(self):
+        snapshot_download(
+            repo_id="th1nhng0/vietnamese-legal-documents",
+            repo_type="dataset",
+            local_dir=VN_BASE_PATH
+        )
+        
+    def load(self, batch_size: int=None, offset: int=None) -> pd.DataFrame:
+        con = duckdb.connect()
+        query = f"""
+            SELECT
+                m.id,
+                m.title,
+                m.so_ky_hieu,
+                m.loai_van_ban,
+                m.ngay_ban_hanh,
+                m.co_quan_ban_hanh,
+                m.linh_vuc,
+                m.nganh,
+                c.content_html
+            FROM read_parquet('{VN_BASE_PATH}/data/metadata.parquet') m
+            JOIN read_parquet('{VN_BASE_PATH}/data/content.parquet') c
+                ON CAST(m.id AS VARCHAR) = c.id
+            WHERE c.content_html IS NOT NULL
+        """
+        
+        if batch_size is not None:
+            query += f" LIMIT {batch_size}"
+        if offset is not None:
+            query += f" OFFSET {offset}"
+        return con.execute(query).df()
