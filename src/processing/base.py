@@ -12,7 +12,7 @@ class BaseDocumentProcessor(ABC):
         pass
 
     @abstractmethod
-    def chunk(self, structure: dict) -> list[dict]:
+    def chunk(self, structure: dict, doc_metadata: dict = None) -> list[dict]:
         """Convert structure → list of chunks with metadata"""
         pass
 

@@ -37,7 +37,6 @@ class VietnameseDataLoader(BaseDataLoader):
                 ON CAST(m.id AS VARCHAR) = c.id
             WHERE c.content_html IS NOT NULL
         """
-        
         if batch_size is not None:
             query += f" LIMIT {batch_size}"
         if offset is not None:

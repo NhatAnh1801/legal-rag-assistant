@@ -1,6 +1,7 @@
 from .base import BaseDocumentProcessor
 from bs4 import BeautifulSoup
 import re
+import time
 
 LEVEL_HIERARCHY = ['phần', 'chương', 'mục', 'tiểu_mục', 'điều','khoản','điểm']
 HEADER_PATTERNS = {
@@ -14,9 +15,13 @@ HEADER_PATTERNS = {
 }
 
 class VietnameseDocumentProcessor(BaseDocumentProcessor):
-    def extract_text(self, raw_content: str):
-        return self._html_to_text(raw_content)
-    
+    def extract_text(self, raw_content: str) -> str:
+        if not raw_content:
+            return ""
+        if raw_content.strip().startswith("<"):
+            return self._html_to_text(raw_content)
+        return raw_content  
+
     def parse_structure(self, text: str) -> dict:
         text = self._preprocess_text(text)
         
@@ -37,18 +42,41 @@ class VietnameseDocumentProcessor(BaseDocumentProcessor):
             "children": self._build_tree(text, 0)
         }
 
-    def chunk(self, structure: dict) -> list[dict]:
+    def chunk(self, structure: dict, doc_metadata: dict = None) -> list[dict]:
         """Convert structure → list of chunks with metadata"""
-        pass
+        chunks = []
+        self._collect_chunks(structure, ancestors=[], chunks=chunks, doc_metadata=doc_metadata or {})
+        return chunks
 
     def process(self, raw_content: str) -> list[dict]:
-        """Full Pipeline"""
-        pass
+        """Full ingestion pipeline"""
+        start = time.time()
+        text = self.extract_text(raw_content)
+        end = time.time()
+        print(f"Time to extract text: {end - start:.2f}s")
+        structure = self.parse_structure(text)
+        return self.chunk(structure)
     
+    def _collect_chunks(self, node, ancestors, chunks, doc_metadata):
+        if not node["children"]:
+            breadcrumb = " > ".join(a["header"] for a in ancestors if a["level"] != "root")
+            context = (breadcrumb + "\n" if breadcrumb else "") + node["header"]
+            chunks.append({
+                "content": (context + "\n" + node["content"]).strip(),
+                "metadata": {
+                    **doc_metadata, "level": node["level"], 
+                    "header": node["header"],
+                    "parent_header": ancestors[-1]["header"] if len(ancestors) > 1 else ""
+                }
+            })
+        else:
+            for child in node["children"]:
+                self._collect_chunks(child, ancestors + [node], chunks, doc_metadata)   
+        
     def _html_to_text(self, html: str) -> str:
         if not html:
             return ""
-        soup = BeautifulSoup(html, "html.parser")
+        soup = BeautifulSoup(html, "lxml")
         for tag in soup(["script", "style"]):
             tag.decompose()
         return soup.get_text(separator="\n", strip=True)
@@ -101,7 +129,6 @@ class VietnameseDocumentProcessor(BaseDocumentProcessor):
 
         # No header -> there is only 1 segment
         if not header_indices:
-            print("no header")
             return [("", text)]
         
         segments = []
@@ -123,26 +150,14 @@ class VietnameseDocumentProcessor(BaseDocumentProcessor):
             segments.append((header_token, content))
         
         return segments
+
     
 from src.data_loader.vn import VietnameseDataLoader
 if __name__ == "__main__":
     data = VietnameseDataLoader()
     processor = VietnameseDocumentProcessor()
 
-    # df = data.load()
-    # import pprint
-    # pp = pprint.PrettyPrinter(depth=5, width=120, compact=False)
-    # for i in range(3):
-    #     html_content = df.iloc[i]["content_html"]
-    #     before_clean = processor._html_to_text(html_content)
-    #     after_clean = processor._preprocess_text(before_clean)
-    #     print("-"*80)
-    #     print("Before clean:")
-    #     print(before_clean)
-    #     print("-"*80)
-    #     print("After clean:")
-    #     print(after_clean)
-    _sample_text = """QUYẾT ĐỊNH
+    sample_text = """QUYẾT ĐỊNH
 Về việc chuyển giao nhiệm vụ quản lý Nhà nước về đất lâm nghiệp
 từ Sở Nông nghiệp và Phát triển Nông thôn và Chi cục kiểm lâm tỉnh sang Sở Địa chính để quản lý
 ỦY BAN NHÂN DÂN TỈNH LÂM ĐỒNG
@@ -172,36 +187,49 @@ chuyển giao tiếp nhận phải hoàn thành trước ngày 31/7/1999;
 Điều 5
 : Các ông: Chánh VP UBND tỉnh, Trưởng Ban TCCQ tỉnh, Giám đốc các Sở: Tài chính vật giá; NN&PTNT; Địa chính; Chi cục trưởng chi cục kiểm lâm cùng thủ trưởng các ngành chức năng có liên quan của tỉnh, Chủ tịch UBND các huyện, thị xã Bảo Lộc và thành phố Đà Lạt căn cứ Quyết định thi hành./.
 """
-    sample_text = """QUY ĐỊNH VỀ QUẢN LÝ VÀ SỬ DỤNG THIẾT BỊ CÔNG NGHỆ TRONG CƠ QUAN NHÀ NƯỚC
-Điều 12. Trách nhiệm của cán bộ, công chức trong việc bảo quản thiết bị
-Cán bộ, công chức, viên chức được giao sử dụng thiết bị công nghệ (máy tính xách tay, máy tính bảng, điện thoại công vụ) có trách nhiệm bảo quản tài sản công theo đúng quy định của pháp luật về quản lý tài sản nhà nước. Việc sử dụng thiết bị phải đảm bảo đúng mục đích công việc, không được tự ý cho mượn hoặc chuyển giao khi chưa có sự đồng ý của cấp có thẩm quyền.
-1. Khi phát hiện thiết bị có dấu hiệu hư hỏng hoặc gặp sự cố kỹ thuật, người sử dụng phải thực hiện các bước sau đây:a) Thông báo ngay cho bộ phận quản trị hệ thống hoặc đơn vị phụ trách công nghệ thông tin của cơ quan để ghi nhận tình trạng sự cố;b) Lập biên bản xác nhận hiện trạng thiết bị, trong đó nêu rõ:
-2. Thời điểm phát hiện sự cố;
-3. Biểu hiện cụ thể của hỏng hóc (không lên nguồn, lỗi phần mềm, hư hỏng vật lý);
-4. Nguyên nhân sơ bộ (nếu xác định được).
-c) Phối hợp với bộ phận chuyên môn để tiến hành các thủ tục sửa chữa hoặc thay thế theo quy trình tài chính của đơn vị.
-3. Trong trường hợp làm mất mát hoặc hư hỏng thiết bị do lỗi chủ quan, người sử dụng phải chịu trách nhiệm như sau:a) Bồi thường thiệt hại bằng tiền mặt tương đương với giá trị còn lại của thiết bị tại thời điểm xảy ra mất mát, hư hỏng;b) Thực hiện việc sửa chữa và thay thế linh kiện chính hãng nếu thiết bị hư hỏng nhưng vẫn có khả năng phục hồi công năng sử dụng;c) Tùy theo mức độ vi phạm và giá trị tài sản, người vi phạm có thể bị xem xét xử lý kỷ luật theo quy định của Luật Cán bộ, công chức và Luật Viên chức hiện hành.
-4. Định kỳ hàng quý, bộ phận quản lý tài sản có trách nhiệm kiểm tra hiện trạng thiết bị và lập báo cáo tổng hợp gửi lãnh đạo cơ quan. Báo cáo phải bao gồm các nội dung:
-Tổng số thiết bị đang vận hành tốt;
-Danh mục các thiết bị cần bảo trì, bảo dưỡng định kỳ;
-Danh sách các thiết bị lỗi thời, cần thực hiện thủ tục thanh lý theo quy định.
-Nghiêm cấm các hành vi sau đây đối với việc sử dụng thiết bị công nghệ công vụ:
-Tự ý thay đổi cấu hình phần cứng hoặc cài đặt các phần mềm không có bản quyền, phần mềm gây nguy cơ mất an toàn thông tin;
-Sử dụng thiết bị để truy cập các trang thông tin điện tử có nội dung độc hại, vi phạm pháp luật hoặc ảnh hưởng đến thuần phong mỹ tục;
-Sử dụng dung lượng lưu trữ công vụ vào mục đích lưu trữ dữ liệu cá nhân có kích thước lớn, gây lãng phí tài nguyên hệ thống.
-"""
-    sample_text = processor._preprocess_text(sample_text)
-    segments = processor._split_by_level(sample_text, "điểm")
-    for header,content in segments:
-        print("-"*80)
-        print(f"Header: {header}\n")
-        print("-"*80)
-        print(f"content: {content}")
-    # import pprint
-    # pp = pprint.PrettyPrinter(depth=5, width=120, compact=False)
-    # structure = processor.parse_structure(sample_text)
-    # pp.pprint(structure)
-    # print("-"*80)
+    df = data.load(batch_size=10, offset=0)
+    html = df.iloc[0]["content_html"]
+
+    start_1 = time.time()
+    processor._html_to_text(html)
+    end_1 = time.time()
+    print(f"_html_to_text: {end_1 - start_1:.6f}s/doc")
+
+    start_2 = time.time()
+    text = processor._html_to_text(html)
+
+    structure = processor.parse_structure(text)
+    end_2 = time.time()
+    print(f"parse_structure: {end_2 - start_2:.6f}s/doc")
+    
+    start_3  = time.time()
+    processor.chunk(structure)
+    end_3 = time.time() 
+    print(f"chunk: {end_3 - start_3:.6f}s/doc")
+    print(f"Total time: {end_3 - start_1:.6f}s/doc")
+    
+    # total_df = len(data.load())
+    # print(f"total df nums: {total_df}")
+    
+    # start = time.time()
+    # df = data.load(batch_size=10, offset=0)
+    # end = time.time()
+    # print(f"Time to load data: {end - start:.2f}s")
+    
+    # num_samples = len(df)
+    # start = time.time()
+    # for i in range(num_samples):
+    #     print(f"\n======= Sample {i} | {df.iloc[i]['loai_van_ban']} =======")
+    #     chunks = processor.process(df.iloc[i]["content_html"])
+    #     for chunk in chunks:
+    #         print("-" * 80)
+    #         print(chunk)
+    # end = time.time()
+    # print(f"\nTotal time: {end - start:.2f}s for {num_samples} docs")
+
+ 
+
+    
 
         
     
