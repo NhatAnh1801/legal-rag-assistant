@@ -16,6 +16,6 @@ class BaseDocumentProcessor(ABC):
         """Convert structure → list of chunks with metadata"""
         pass
 
-    def process(self, raw_content: str) -> list[dict]:
+    def process(self, raw_content: str, doc_metadata: dict = None) -> list[dict]:
         """Full Pipeline"""
         pass
