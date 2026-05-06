@@ -1,5 +1,7 @@
+import hashlib
+import re
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, Fusion, FusionQuery, VectorParams, PointStruct, Filter, FieldCondition, MatchValue, Prefetch
+from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
 import uuid
 
 
@@ -7,7 +9,7 @@ qdrand_url = "http://localhost:6333"
 
 class Qdrant:
     def __init__(self, collection_name: str):
-        self.client = QdrantClient(url=qdrand_url)
+        self.client = QdrantClient(url=qdrand_url, timeout=120)
         self.collection_name = collection_name
 
     def create_collection(self):

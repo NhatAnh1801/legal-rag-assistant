@@ -1,14 +1,15 @@
 from langchain_core.documents import Document
-from langchain_classic.storage import LocalFileStore, create_kv_docstore
 from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
-from langchain_chroma import Chroma
 
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain_core.tools import tool
 
 from src.models.embeddings.gte_multi_base import GTE
+from src.processing.vn import VietnameseDocumentProcessor
+from src.data_loader.vn import VietnameseDataLoader
+from src.qdrant import Qdrant
 from src.prompt import*
 
 from collections import Counter
@@ -48,11 +49,7 @@ class RagController:
         )
         
         # Vector database
-        self.vector_db = Chroma(
-            embedding_function=self.embedding_model,
-            persist_directory='./data/chromadb'    
-        )
-        self.docstore = create_kv_docstore(LocalFileStore("./data/docstore"))
+        self.vector_db = Qdrant("vn_documents")
     
     def ingest_legal_docs(self):
         try:

@@ -50,16 +50,19 @@ class VietnameseDocumentProcessor(BaseDocumentProcessor):
 
     def process(self, raw_content: str, doc_metadata: dict = None) -> list[dict]:
         """Full ingestion pipeline"""
-        start = time.time()
+        # start = time.time()
         text = self.extract_text(raw_content)
-        end = time.time()
-        print(f"Time to extract text: {end - start:.2f}s")
+        # end = time.time()
+        # print(f"Time to extract text: {end - start:.2f}s")
         structure = self.parse_structure(text)
         return self.chunk(structure, doc_metadata)
     
     def _collect_chunks(self, node, ancestors, chunks, doc_metadata):
         if not node["children"]:
-            breadcrumb = " > ".join(a["header"] for a in ancestors if a["level"] != "root")
+            breadcrumb = " > ".join(
+                (a["header"] + (": " + a["content"].split("\n")[0] if a["content"] else ""))
+                for a in ancestors if a["level"] != "root"
+            )
             context = (breadcrumb + "\n" if breadcrumb else "") + node["header"]
             chunks.append({
                 "content": (context + "\n" + node["content"]).strip(),
@@ -150,82 +153,6 @@ class VietnameseDocumentProcessor(BaseDocumentProcessor):
             segments.append((header_token, content))
         
         return segments
-
-    
-# from src.data_loader.vn import VietnameseDataLoader
-# if __name__ == "__main__":
-#     data = VietnameseDataLoader()
-#     processor = VietnameseDocumentProcessor()
-
-#     sample_text = """QUYẾT ĐỊNH
-# Về việc chuyển giao nhiệm vụ quản lý Nhà nước về đất lâm nghiệp
-# từ Sở Nông nghiệp và Phát triển Nông thôn và Chi cục kiểm lâm tỉnh sang Sở Địa chính để quản lý
-# ỦY BAN NHÂN DÂN TỈNH LÂM ĐỒNG
-# Căn cứ Luật Tổ chức HĐND và UBND (sửa đổi) ngày 21/06/1994;
-# Căn cứ Lệnh số: 58 LCT/HĐNN ngày 19/8/1991 của Chủ tịch nước, "về việc công bố Luật Bảo vệ và phát triển rừng";
-# Căn cứ Quyết định số: 245/QĐ-TTg ngày 21/12/1998 của Thủ tướng Chính phủ, về thực hiện trách nhiệm quản lý Nhà nước của các cấp về rừng và đất lâm nghiệp;
-# Theo đề nghị của Ban TCCQ tỉnh Lâm Đồng, sau khi thống nhất với Sở NN&PTNT, Chi cục Kiểm lâm và Sở Địa chính tỉnh Lâm Đồng,
-# QUYẾT ĐỊNH:
-# Điều 1
-# : Chuyển giao nhiệm vụ quản lý Nhà nước về đất lâm nghiệp từ Sở Nông nghiệp & PTNT và Chi cục kiểm lâm sang Sở Địa chính để quản lý.
-# Điều 2
-# : Sở Địa chính có nhiệm vụ giúp UBND tỉnh Lâm Đồng thực hiện trách nhiệm quản lý nhà nước về đất lâm nghiệp trên địa bàn tỉnh Lâm Đồng cụ thể như sau:
-# 2.1- Tổ chức việc điều tra, lập bản đồ phân định ranh giới về đất lâm nghiệp trên địa bàn tỉnh theo quy định của chính phủ và hướng dẫn của Tổng cục Địa chính.
-# Phối hợp với Sở Nông nghiệp và Phát triển Nông thôn Chỉ đạo, hướng dẫn UBND các huyện, TX Bảo Lộc, TP Đà Lạt theo dõi, lập báo cáo thống kê biến động về đất lâm nghiệp và tổng hợp báo cáo UBND tỉnh.
-# 2.2- Cùng Sở Nông nghiệp và Phát triển Nông thôn lập quy hoạch và kế họach sử dụng đất lâm nghiệp của tỉnh trình UBND tỉnh, Hội đồng nhân dân tỉnh thông qua trước khi trình Chính phủ xét duyệt
-# .
-# 2.3- Hướng dẫn UBND các huyện, TX. Bảo Lộc, TP. Đà Lạt và các đơn vị có liên quan lập quy hoạch, kế hoạch sử dụng đất lâm nghiệp và thẩm định trình UBND tỉnh phê duyệt.
-# 2.4- Tham mưu giúp UBND tỉnh thực hiện giao đất lâm nghiệp, thu hồi đất lâm nghiệp, cấp giấy chứng nhận quyền sử dụng đất và các nghiệp vụ khác liên quan đến việc quản lý đất lâm nghiệp giao cho các thành phần kinh tế khác theo quy định của pháp luật; hưởng dẫn
-# Ủ
-# y ban nhân dân cấp huyện thực hiện giao đất, cho thuê đất lâm nghiệp đối với các hộ gia đình, cá nhân theo đúng chính sách, chế độ quy định của nhà nước.
-# 2.5- Kiểm tra, thanh tra và xử lý các vi phạm trong việc chấp hành pháp luật, chính sách về quản lý sử dụng đất lâm nghiệp; giải quyết các tranh chấp về đất lâm nghiệp theo đúng thẩm quyền và quy định của luật.
-# Điều 3
-# : Giao các ông Giám đốc Sở NN&PTNT; Chi cục trưởng chi cục kiểm lâm, thủ trưởng các ngành có liên quan của tỉnh triển khai thực hiện công tác chuyển giao nhiệm vụ quản lý nhà nước về đất lâm nghiệp từ đơn vị mình cho Giám đốc Sở Địa chính (bao gồm các hồ sơ, tài liệu, bản đồ có liên quan đến công tác quản lý đất lâm nghiệp; hồ sơ giao đất lâm nghiệp cho các thành phần kinh tế và tổ chức nhà nước trong thời gian qua; hồ sơ, Bản đồ phân định đất Nông, đất lâm của tỉnh); để Sở Địa chính thực hiện nhiệm vụ giúp UBND tỉnh thực hiện trách nhiệm quản lý nhà nước về đất lâm nghiệp trên địa bàn tỉnh Lâm Đồng theo nội dung Quyết định số: 245/QĐ-TTg ngày 21/12/1998 của Thủ tướng Chính phủ, "về thực hiện trách nhiệm quản lý Nhà nước của các cấp về đất lâm nghiệp"; Công tác
-# chuyển giao tiếp nhận phải hoàn thành trước ngày 31/7/1999;
-# Điều 4
-# : Quyết định này có hiệu lực kể từ ngày ký. Mọi quyết định trước đây trái với Quyết định này đều hết hiệu lực thi hành.
-# Điều 5
-# : Các ông: Chánh VP UBND tỉnh, Trưởng Ban TCCQ tỉnh, Giám đốc các Sở: Tài chính vật giá; NN&PTNT; Địa chính; Chi cục trưởng chi cục kiểm lâm cùng thủ trưởng các ngành chức năng có liên quan của tỉnh, Chủ tịch UBND các huyện, thị xã Bảo Lộc và thành phố Đà Lạt căn cứ Quyết định thi hành./.
-# """
-#     df = data.load(batch_size=10, offset=0)
-#     html = df.iloc[0]["content_html"]
-
-#     start_1 = time.time()
-#     processor._html_to_text(html)
-#     end_1 = time.time()
-#     print(f"_html_to_text: {end_1 - start_1:.6f}s/doc")
-
-#     start_2 = time.time()
-#     text = processor._html_to_text(html)
-
-#     structure = processor.parse_structure(text)
-#     end_2 = time.time()
-#     print(f"parse_structure: {end_2 - start_2:.6f}s/doc")
-    
-#     start_3  = time.time()
-#     processor.chunk(structure)
-#     end_3 = time.time() 
-#     print(f"chunk: {end_3 - start_3:.6f}s/doc")
-#     print(f"Total time: {end_3 - start_1:.6f}s/doc")
-    
-    # total_df = len(data.load())
-    # print(f"total df nums: {total_df}")
-    
-    # start = time.time()
-    # df = data.load(batch_size=10, offset=0)
-    # end = time.time()
-    # print(f"Time to load data: {end - start:.2f}s")
-    
-    # num_samples = len(df)
-    # start = time.time()
-    # for i in range(num_samples):
-    #     print(f"\n======= Sample {i} | {df.iloc[i]['loai_van_ban']} =======")
-    #     chunks = processor.process(df.iloc[i]["content_html"])
-    #     for chunk in chunks:
-    #         print("-" * 80)
-    #         print(chunk)
-    # end = time.time()
-    # print(f"\nTotal time: {end - start:.2f}s for {num_samples} docs")
 
  
 

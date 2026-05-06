@@ -22,7 +22,7 @@ class VietnameseDataLoader(BaseDataLoader):
     def load(self, batch_size: int=None, offset: int=None) -> pd.DataFrame:
         con = duckdb.connect()
         query = f"""
-            SELECT
+            SELECT 
                 m.id,
                 m.title,
                 m.so_ky_hieu,
@@ -33,12 +33,25 @@ class VietnameseDataLoader(BaseDataLoader):
                 m.nganh,
                 c.content_html
             FROM read_parquet('{VN_BASE_PATH}/data/metadata.parquet') m
-            JOIN read_parquet('{VN_BASE_PATH}/data/content.parquet') c
-                ON CAST(m.id AS VARCHAR) = c.id
+            JOIN(
+                SELECT DISTINCT id, content_html
+                FROM read_parquet('{VN_BASE_PATH}/data/content.parquet')
+                WHERE content_html IS NOT NULL
+            ) c
+            ON CAST(m.id AS VARCHAR) = c.id
             WHERE c.content_html IS NOT NULL
+            ORDER BY m.id
         """
         if batch_size is not None:
             query += f" LIMIT {batch_size}"
         if offset is not None:
             query += f" OFFSET {offset}"
         return con.execute(query).df()
+
+    def total_rows(self) -> int:
+        con = duckdb.connect()
+        query = f"""
+            SELECT COUNT(*) FROM read_parquet('{VN_BASE_PATH}/data/metadata.parquet')
+        """
+        return con.execute(query).fetchone()[0]
+        

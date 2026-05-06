@@ -3,8 +3,9 @@ import torch.nn.functional as F
 from transformers import AutoModel, AutoTokenizer
 from langchain_core.embeddings import Embeddings
 from typing import List
-from matplotlib import pyplot as plt
 import time
+
+from tqdm import tqdm
 
 class GTE(Embeddings):
     def __init__(self, batch_size: int=32):
@@ -27,7 +28,7 @@ class GTE(Embeddings):
     def _embedding(self, texts: List[str]) -> List[List[float]]:
         batch_dict = self.tokenizer(
             texts, 
-            max_length=1024, 
+            max_length=512, 
             padding=True, 
             truncation=True, 
             return_tensors='pt'
@@ -46,11 +47,12 @@ class GTE(Embeddings):
       
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         all_embeddings = []
-        for i in range(0, len(texts), self.batch_size):
-            batch_texts = texts[i:i + self.batch_size]
-            embeddings = self._embedding(batch_texts)
-            all_embeddings.extend(embeddings)
-            
+        with tqdm(total=len(texts), desc="Embedding documents", unit="chunk") as pbar:
+            for i in range(0, len(texts), self.batch_size):
+                batch_texts = texts[i:i + self.batch_size]
+                embeddings = self._embedding(batch_texts)
+                all_embeddings.extend(embeddings)
+                pbar.update(len(batch_texts))
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         return all_embeddings
@@ -60,14 +62,13 @@ class GTE(Embeddings):
             torch.cuda.empty_cache()
         return self._embedding([text])[0]
     
-    def _find_optimal_batch_size(self, max_test_batch: int=256):
+    def _find_optimal_batch_size(self, test_length: int=512, max_test_batch: int=1024):
             """
-                Stress test to identify the maximum safe batch_size on the GPU
-                and plot the throughput to find the optimal performance sweet spot.
+            Benchmarks maximum GPU batch size and throughput.
+            Returns:
+                Optimal batch size for best performance on the current hardware.
             """
-
-            print("Starting stress test and performance benchmark...")
-            sample_text = "test " * 1024 
+            sample_text = "test " * test_length 
             
             current_batch = 1
             
@@ -110,16 +111,16 @@ class GTE(Embeddings):
                     tested_batches.append(current_batch)
                     throughputs.append(throughput)
                     
-                    print(f"✅ Pass: batch_size = {current_batch:<4} | Speed: {throughput:.2f} samples/sec")
+                    print(f"Passed: batch_size = {current_batch:<4} | Speed: {throughput:.2f} samples/sec")
                     
                     current_batch *= 2
                     
                 except torch.cuda.OutOfMemoryError:
-                    print(f"❌ OOM Error: Out of memory at batch_size = {current_batch}.")
+                    print(f"!!!OOM Error: Out of memory at batch_size = {current_batch}.")
                     break
                 except RuntimeError as e:
                     if "out of memory" in str(e).lower():
-                        print(f"❌ OOM Error: Out of memory at batch_size = {current_batch}.")
+                        print(f"!!!OOM Error: Out of memory at batch_size = {current_batch}.")
                     else:
                         raise e
                     break
@@ -127,38 +128,85 @@ class GTE(Embeddings):
                     torch.cuda.empty_cache()
             
             if not tested_batches:
-                print("⚠️ WARNING: The GPU cannot handle even batch_size = 1! Consider reducing max_seq_length.")
+                print("!!!WARNING: The GPU cannot handle even batch_size = 1! Consider reducing max_seq_length.")
                 return
                 
             # Find the batch size that yielded the highest throughput
             best_throughput = max(throughputs)
             best_perf_batch = tested_batches[throughputs.index(best_throughput)]
             
-            
             # Update the class attribute to use the absolute best batch size from now on
             self.batch_size = best_perf_batch
-            
-            # ================= PLOTTING THE RESULTS =================
-            plt.figure(figsize=(10, 6))
-            plt.plot(tested_batches, throughputs, marker='o', linestyle='-', color='b', linewidth=2)
-            
-            # Highlight the optimal batch size with a red star
-            plt.plot(best_perf_batch, best_throughput, marker='*', color='r', markersize=15, label=f'Sweet Spot (BS={best_perf_batch})')
-            
-            plt.title('GPU Throughput vs Batch Size', fontsize=14)
-            plt.xlabel('Batch Size (Log Scale)', fontsize=12)
-            plt.ylabel('Throughput (Samples / Second)', fontsize=12)
-            
-            # Use log scale for X-axis since we multiplied by 2 each time
-            plt.xscale('log', base=2)
-            plt.xticks(tested_batches, labels=[str(b) for b in tested_batches]) 
-            
-            plt.grid(True, linestyle='--', alpha=0.7)
-            plt.legend()
-            plt.tight_layout()
-            
-            plt.savefig('batch_size_benchmark.png')
-            plt.show()
+            return best_perf_batch
+
+# if __name__ == "__main__":
+#     from src.data_loader.vn import VietnameseDataLoader
+#     from src.processing.vn import VietnameseDocumentProcessor
+#     from src.models.embeddings.gte_multi_base import GTE
+#     import matplotlib.pyplot as plt
+#     import numpy as np
+
+#     loader = VietnameseDataLoader()
+#     processor = VietnameseDocumentProcessor()
+#     gte = GTE(batch_size=32)
+
+    # # Sample 500 docs for distribution
+    # df = loader.load(batch_size=2000, offset=0)
+
+    # all_lengths = []
+    # doc_types = []
+    # for _, row in tqdm(df.iterrows(), total=len(df)):
+    #     chunks = processor.process(row["content_html"], doc_metadata={"doc_id": str(row["id"])})
+    #     for chunk in chunks:
+    #         tokens = gte.tokenizer.encode(chunk["content"])
+    #         all_lengths.append(len(tokens))
+    #         doc_types.append(row["loai_van_ban"])  
+
+    # all_lengths = np.array(all_lengths)
+
+    # print(f"Total chunks: {len(all_lengths)}")
+    # print(f"Min:    {all_lengths.min()}")
+    # print(f"Max:    {all_lengths.max()}")
+    # print(f"Mean:   {all_lengths.mean():.0f}")
+    # print(f"Median: {np.median(all_lengths):.0f}")
+    # print(f"P90:    {np.percentile(all_lengths, 90):.0f}")
+    # print(f"P95:    {np.percentile(all_lengths, 95):.0f}")
+    # print(f"P99:    {np.percentile(all_lengths, 99):.0f}")
+    # print(f">512:   {(all_lengths > 512).sum()} ({(all_lengths > 512).mean()*100:.1f}%)")
+    # print(f">256:   {(all_lengths > 256).sum()} ({(all_lengths > 256).mean()*100:.1f}%)")
+    
+    # # Then after the main stats:
+    # print("\n--- By doc type ---")
+    # for loai in df["loai_van_ban"].unique():
+    #     subset = [l for l, t in zip(all_lengths, doc_types) if t == loai]
+    #     if subset:
+    #         print(f"{loai:20} | count={len(subset):5} | mean={np.mean(subset):6.0f} | P95={np.percentile(subset, 95):6.0f} | max={max(subset):6}")
+
+    # plt.figure(figsize=(12, 5))
+    # plt.hist(all_lengths, bins=100, edgecolor='black')
+    # plt.axvline(512, color='red', linestyle='--', label='512 tokens')
+    # plt.axvline(256, color='orange', linestyle='--', label='256 tokens')
+    # plt.xlabel("Token length")
+    # plt.ylabel("Count")
+    # plt.title("Chunk token length distribution")
+    # plt.legend()
+    # plt.show()
+    
+    # all_chunks = []
+    # df = loader.load(batch_size=2000, offset=0)
+    # for _, row in tqdm(df.iterrows(), total=len(df)):
+    #     chunks = processor.process(row["content_html"], doc_metadata={"doc_id": str(row["id"])})
+    #     all_chunks.extend(chunks)
+        
+    # print(f"Got {len(all_chunks)} chunks for benchmark")
+    # gte = GTE(batch_size=32)
+    # sample_texts = [c["content"] for c in all_chunks[:1000]]
+    # for bs in [32, 64, 128, 256]:
+    #     gte.batch_size = bs
+    #     start = time.time()
+    #     gte.embed_documents(sample_texts)
+    #     elapsed = time.time() - start
+    #     print(f"batch_size={bs}: {len(sample_texts)/elapsed:.1f} chunks/s")
         
 
 
