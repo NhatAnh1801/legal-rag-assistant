@@ -1,17 +1,20 @@
 from .base import BaseDocumentProcessor
 from bs4 import BeautifulSoup
 import re
-import time
 
-LEVEL_HIERARCHY = ['phần', 'chương', 'mục', 'tiểu_mục', 'điều','khoản','điểm']
+LEVEL_HIERARCHY = {
+    'phần': 0, 'chương': 1, 'mục': 2,
+    'tiểu_mục': 3, 'điều': 4, 'khoản': 5, 'điểm': 6
+}
+
 HEADER_PATTERNS = {
-    'phần':      re.compile(r'^\s*phần\s+(thứ\s+)?([\divxlcdm]+)', re.UNICODE),
-    'chương':    re.compile(r'^\s*chương\s+([\divxlcdm]+)', re.UNICODE),
-    'mục':       re.compile(r'^\s*mục\s+(\d+)', re.UNICODE),
-    'tiểu_mục':  re.compile(r'^\s*tiểu\s+mục\s+(\d+)', re.UNICODE),
-    'điều':      re.compile(r'^\s*điều\s+(\d+)', re.UNICODE),
-    'khoản': re.compile(r'^([1-9]\d?(?:\.\d+)?)[\.\-]\s*', re.UNICODE),
-    'điểm':      re.compile(r'^([a-zđ])[/\.\)]\s+', re.UNICODE),
+    'phần':     re.compile(r'^\s*phần\s+thứ\s+(\w+)', re.IGNORECASE| re.UNICODE),
+    'chương':   re.compile(r'^\s*chương\s+([\divxlcdm]+[a-zđ]?)', re.IGNORECASE| re.UNICODE),
+    'mục':      re.compile(r'^\s*mục\s+((?:x{0,3}(?:ix|iv|v?i{0,3})|\d+)[a-zđ]?)', re.IGNORECASE| re.UNICODE),
+    'tiểu_mục': re.compile(r'^\s*tiểu\s+mục\s+(\d+[a-zđ]?)', re.IGNORECASE| re.UNICODE),
+    'điều':     re.compile(r'^\s*điều\s+(\d+[a-zđ]?)', re.IGNORECASE| re.UNICODE),
+    'khoản':    re.compile(r'^([1-9]\d*[a-zđ]?(?:\.\d+)?)[\.\-\)]\s*(?=\w)', re.IGNORECASE| re.UNICODE),
+    'điểm': re.compile(fr'^([a-zđA-ZĐ]+)[\.\)\-]\s+', re.UNICODE),
 }
 
 class VietnameseDocumentProcessor(BaseDocumentProcessor):
@@ -23,138 +26,230 @@ class VietnameseDocumentProcessor(BaseDocumentProcessor):
         return raw_content  
 
     def parse_structure(self, text: str) -> dict:
-        text = self._preprocess_text(text)
-        
-        lines = text.splitlines()
-        preamble_lines = []
-        for line in lines:
-            normalized = line.strip().lower()
-            found = any(HEADER_PATTERNS[l].match(normalized) for l in LEVEL_HIERARCHY)
-            if found:
-                break
-            preamble_lines.append(line)
-        preamble = "\n".join(preamble_lines).strip()
-        
-        return {
-            "level": "root",
-            "header": "",
-            "content": preamble,
-            "children": self._build_tree(text, 0)
-        }
+        return self._build_tree(text)
 
-    def chunk(self, structure: dict, doc_metadata: dict = None) -> list[dict]:
+    def chunk(self, structure: dict, doc_metadata: dict = {}) -> list[dict]:
         """Convert structure → list of chunks with metadata"""
+        if not structure:
+            return []
         chunks = []
-        self._collect_chunks(structure, ancestors=[], chunks=chunks, doc_metadata=doc_metadata or {})
+        exclude = {"content", "node_id"}
+        for node_id, node in structure.items():
+            content_formatted = self._format_content(node["content"])
+            chunks.append({
+                "content": content_formatted,
+                "metadata": {
+                    **doc_metadata,
+                    "node_id": node_id,
+                    **{k: v for k, v in node.items() if k not in exclude}
+                }
+            })
         return chunks
 
-    def process(self, raw_content: str, doc_metadata: dict = None) -> list[dict]:
+    def process(self, raw_content: str, doc_metadata: dict = {}) -> list[dict]:
         """Full ingestion pipeline"""
-        # start = time.time()
         text = self.extract_text(raw_content)
-        # end = time.time()
-        # print(f"Time to extract text: {end - start:.2f}s")
         structure = self.parse_structure(text)
         return self.chunk(structure, doc_metadata)
     
-    def _collect_chunks(self, node, ancestors, chunks, doc_metadata):
-        if not node["children"]:
-            breadcrumb = " > ".join(
-                (a["header"] + (": " + a["content"].split("\n")[0] if a["content"] else ""))
-                for a in ancestors if a["level"] != "root"
-            )
-            context = (breadcrumb + "\n" if breadcrumb else "") + node["header"]
-            chunks.append({
-                "content": (context + "\n" + node["content"]).strip(),
-                "metadata": {
-                    **doc_metadata, "level": node["level"], 
-                    "header": node["header"],
-                    "parent_header": ancestors[-1]["header"] if len(ancestors) > 1 else ""
-                }
-            })
-        else:
-            for child in node["children"]:
-                self._collect_chunks(child, ancestors + [node], chunks, doc_metadata)   
-        
+    # HELPER FUNCTIONS
     def _html_to_text(self, html: str) -> str:
         if not html:
             return ""
         soup = BeautifulSoup(html, "lxml")
-        for tag in soup(["script", "style"]):
-            tag.decompose()
-        return soup.get_text(separator="\n", strip=True)
+        lines = []
+        for p in soup.find_all("p"):
+            text = p.get_text(strip=True)
+            if text:  
+                lines.append(text)
+                
+        return "\n".join(lines)
+
+    def _format_content(self, content: list[str]) -> str:
+        return "\n".join(content)
     
-    def _preprocess_text(self, text: str) -> str:
-        lines = text.splitlines()
-        cleaned = []
-        for line in lines:
-            stripped = line.strip()
-            if not stripped:
+    def _is_real_header(self, remainder: str) -> bool:
+        if remainder == "":
+            return True
+        return bool(re.match(r'^[\s]*[.:\-]', remainder))
+    
+    def _resolve_diem_edge_case(self, header_value, remainder: str) -> tuple[str | None, str | None, str | None]:
+        if header_value is None:
+            return None, None, None
+        stripped_remainder = remainder.strip(" .:-)")
+        if re.match(r'^(I{1,3}|IV|VI{0,3}|IX|X{1,3})$', header_value):
+            return "mục", header_value, stripped_remainder
+        if header_value.isupper():
+            return "tiểu_mục", header_value, stripped_remainder
+        return "điểm", header_value, stripped_remainder
+     
+    def _classify_level(self, line: str) -> tuple[str | None, str | None]:
+        """Returns: (header_name, header_value, remainder) or (None, None, None) if no match"""
+        line = line.strip()
+        for header_name, pattern in HEADER_PATTERNS.items():
+            match = pattern.match(line)
+            if match:
+                remainder = line[match.end():]
+                header_value = match.group(1)
+                if not self._is_real_header(remainder) and header_name not in ("điểm", "khoản"):
+                    return None, None, None
+                if header_name == "điểm":
+                    return self._resolve_diem_edge_case(header_value, remainder)
+                return header_name, header_value, remainder.strip(" .:-")
+        return None, None, None
+        
+    def _build_tree(self, text:str) -> dict|None:
+        nodes: dict[str, dict] = {}
+        stack = ["root"]
+        
+        nodes["root"] = {
+            "node_id": "root",
+            "header_name": "", 
+            "header_value": "",
+            "header_index": -1,
+            "content": []
+        }
+        
+        for i, line in enumerate(text.splitlines()):
+            line = line.strip()
+            if line is None:
                 continue
-            if stripped.startswith(':') and cleaned:
-                cleaned[-1] = cleaned[-1] + stripped
-            else:
-                cleaned.append(stripped)
-        return "\n".join(cleaned)
-    
-    def _build_tree(self, text: str, level_idx: int) -> list[dict]:
-        if level_idx >= len(LEVEL_HIERARCHY):
-            return []
-        
-        level = LEVEL_HIERARCHY[level_idx]
-        segments = self._split_by_level(text, level)
-        
-        if len(segments) == 1 and segments[0][0] == "":
-            return self._build_tree(text, level_idx + 1)
-        
-        nodes = []
-        for header, content in segments:
-            node = {
-                "level": level,
-                "header": header,
-                "content": content,
-                "children": self._build_tree(content, level_idx + 1)
+            
+            header_name, header_value, remainder = self._classify_level(line)
+            
+            if header_name is None:
+                nodes[stack[-1]]["content"].append(line)
+                continue
+            
+            header_index = LEVEL_HIERARCHY[header_name]
+            while len(stack) > 1 and nodes[stack[-1]]["header_index"] >= header_index:
+                stack.pop()
+            
+            node_id = f"{stack[-1]}.{header_name}_{header_value}_{i}"
+            nodes[node_id] = {
+                "node_id": node_id,
+                "header_name": header_name, 
+                "header_value": header_value,
+                "header_index": header_index,
+                "content": [],
             }
-            nodes.append(node)
+            stack.append(node_id)
+            if remainder: 
+                nodes[node_id]['content'].append(remainder)
         return nodes
+
+
+REQUIRED_CHUNK_KEYS = {"content", "metadata"}
+REQUIRED_METADATA_KEYS = {"node_id", "header_name", "header_value", "header_index"}
+VALID_LEVELS = {"phần", "chương", "mục", "tiểu_mục", "điều", "khoản", "điểm", ""} 
+
+def validate_chunk(chunk: dict, expect_doc_metadata: bool = True) -> list[str]:
+    errors = []
+    if set(chunk.keys()) != REQUIRED_CHUNK_KEYS:
+        errors.append(f"keys must be {REQUIRED_CHUNK_KEYS}, got {set(chunk.keys())}")
+
+    content = chunk.get("content")
+    if not isinstance(content, str):
+        errors.append("content must be str")
+
+    meta = chunk.get("metadata")
+    if not isinstance(meta, dict):
+        errors.append("metadata must be dict")
+        return errors
+
+    missing = REQUIRED_METADATA_KEYS - meta.keys()
+    if missing:
+        errors.append(f"metadata missing: {missing}")
+
+    if meta.get("header_name") not in VALID_LEVELS:
+        errors.append(f"invalid header_name: {meta.get('header_name')}")
+
+    if expect_doc_metadata and "doc_id" not in meta:
+        errors.append("metadata missing doc_id (needed for Qdrant)")
+
+    return errors
+
+def validate_document(processor, row, max_text_loss_ratio: float = 0.08) -> dict:
+    doc_metadata = {
+        "doc_id": str(row["id"]),
+        "title": row["title"],
+    }
+    raw = row["content_html"]
+    plain = processor.extract_text(raw)
+    chunks = processor.process(raw, doc_metadata=doc_metadata)
+    chunk_count = len(chunks)
+    result = {
+        "doc_id": doc_metadata["doc_id"],
+        "title": doc_metadata["title"],
+        "plain_len": len(plain),
+        "chunk_count": chunk_count,
+        "errors": [],
+        "warnings": [],
+    }
+
+    if not plain.strip():
+        result["warnings"].append("empty plain text after extract")
+        return result
+
+    if not chunks:
+        result["errors"].append("no chunks produced")
+        return result
+
+    # Schema từng chunk
+    for i, ch in enumerate(chunks):
+        result["errors"].extend(
+            f"chunk[{i}]: {e}" for e in validate_chunk(ch)
+        )
+
+    joined = "\n".join(c["content"] for c in chunks)
+    loss = 1 - (len(joined) / len(plain)) if plain else 0
+    result["text_loss_ratio"] = loss
+    if loss > max_text_loss_ratio and chunk_count < 100:
+        result["errors"].append(
+            f"text loss {loss:.1%} > {max_text_loss_ratio:.0%}"
+        )
+
+    # Gợi ý thêm (warning, không fail cứng)
+    if any(c["metadata"]["node_id"] == "root" for c in chunks):
+        root = next(c for c in chunks if c["metadata"]["node_id"] == "root")
+        if len(root["content"]) > 2000:
+            result["warnings"].append("root chunk very large")
+
+    return result
+
+def run_chunk_quality_check(
+    batch_size: int = 100,
+    offset: int = 0,
+    max_fail_ratio: float = 0.05, 
+) -> dict:
+    from src.data_loader.vn import VietnameseDataLoader
+    from src.processing.vn import VietnameseDocumentProcessor
+    from tqdm import tqdm  
+
+    loader = VietnameseDataLoader()
+    processor = VietnameseDocumentProcessor()
+    df = loader.load(batch_size=batch_size, offset=offset)
     
-    def _split_by_level(self, text: str, level: str) -> list[tuple[str, str]]:
-        """Split the text by the given level. Return a list of tuples, each tuple contains the level and the text content under that level"""
-        
-        pattern = HEADER_PATTERNS[level]
-        lines = text.splitlines(keepends=True)
-        
-        # Find the indices of headers
-        header_indices = []
-        for i, line in enumerate(lines):
-            if pattern.match(line.strip().lower()):
-                header_indices.append(i)
+    results = []
+    for _, row in tqdm(df.iterrows(), total=len(df), desc="Validating documents"):
+        results.append(validate_document(processor, row))
 
-        # No header -> there is only 1 segment
-        if not header_indices:
-            return [("", text)]
-        
-        segments = []
-        
-        for i, idx in enumerate(header_indices):
-            full_header_line = lines[idx].strip()
-            end = header_indices[i + 1] if i + 1 < len(header_indices) else len(lines)
-            body = "".join(lines[idx + 1:end]).strip()
+    failed = [r for r in results if r["errors"]]
+    summary = {
+        "total_docs": len(results),
+        "failed_docs": len(failed),
+        "fail_ratio": len(failed) / len(results) if results else 0,
+        "avg_chunks": sum(r["chunk_count"] for r in results) / len(results),
+        "avg_text_loss": sum(r.get("text_loss_ratio", 0) for r in results) / len(results),
+        "failures_sample": failed[:10],
+    }
 
-            if level in {"khoản", "điểm"}:
-                parts = full_header_line.split(maxsplit=1)
-                header_token = parts[0].rstrip(".-")
-                inline_content = parts[1].strip() if len(parts) > 1 else ""
-            else:
-                m = HEADER_PATTERNS[level].match(full_header_line.lower())
-                header_token = m.group(0).strip()
-                inline_content = full_header_line[len(m.group(0)):].lstrip(':. ').strip()
-            content = (inline_content + "\n" + body).strip() if inline_content else body
-            segments.append((header_token, content))
-        
-        return segments
+    if summary["fail_ratio"] > max_fail_ratio:
+        summary["passed"] = False
+    else:
+        summary["passed"] = True
 
- 
+    return summary
 
     
 

@@ -12,10 +12,10 @@ class BaseDocumentProcessor(ABC):
         pass
 
     @abstractmethod
-    def chunk(self, structure: dict, doc_metadata: dict = None) -> list[dict]:
+    def chunk(self, structure: dict, doc_metadata: dict = {}) -> list[dict]:
         """Convert structure → list of chunks with metadata"""
         pass
 
-    def process(self, raw_content: str, doc_metadata: dict = None) -> list[dict]:
+    def process(self, raw_content: str, doc_metadata: dict = {}) -> list[dict]:
         """Full Pipeline"""
         pass

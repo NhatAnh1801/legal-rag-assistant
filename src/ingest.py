@@ -59,7 +59,7 @@ class Ingest:
             results = list(tqdm(executor.map(_process_row, args), total=len(args), desc=f"Processing {self.country} documents"))
         
         chunks = []
-        for idx, (result, (_, _, current_hash)) in enumerate(zip(results, rows_to_process)):
+        for _, (result, (_, _, current_hash)) in enumerate(zip(results, rows_to_process)):
             chunks.extend(result)
             doc_id = result[0]["metadata"]["doc_id"] if result else None
             if doc_id:
@@ -97,43 +97,74 @@ def _count_duplicates(client, collection_name: str, limit: int = 500):
     all_points, _ = client.scroll(
         collection_name=collection_name,
         limit=limit,
-        with_payload=True,
-        with_vectors=True
+        with_payload=True
     )
     
-    def norm_text(x: str) -> str:
-        return re.sub(r"\s+", " ", (x or "")).strip().lower()
-    
-    pairs = []
+    total_dup_payload = {}
     for p in tqdm(all_points, desc="Processing points"):
-        doc_id = p.payload.get("doc_id")
-        content = p.payload.get("content")
-        if doc_id is None or content is None:
+        payload = p.payload
+        if payload is None:
             continue
-        pairs.append((str(doc_id), norm_text(content)))
         
-    pair_counts = Counter(pairs)
-    dup_pairs = {k: v for k, v in pair_counts.items() if v > 1}
-    print("duplicate (doc_id, content) groups:", len(dup_pairs))
-    print("duplicate rows in those groups:", sum(dup_pairs.values()))
-    for i, ((doc_id, content_norm), cnt) in enumerate(dup_pairs.items(), 1):
-        print("-" * 100)
-        print(f"{i}. doc_id={doc_id} appears {cnt} times")
-        print(f"content_preview={content_norm[:300]}")
-        if i >= 20:
-            break
+        payload_key = json.dumps(payload, sort_keys=True, ensure_ascii=False)
+        total_dup_payload.setdefault(payload_key, []).append(p.id)
 
-#if __name__ == "__main__":
+    duplicates = {payload_key: ids for payload_key, ids in total_dup_payload.items() if len(ids) > 1}
+    print(f"Total duplicate payloads: {len(duplicates)}")
+    
+def _delete_duplicates(client, collection_name: str, batch_size: int = 1000):
+    all_points = []
+    offset = None
+    while True:
+        batch, offset = client.scroll(
+            collection_name=collection_name,
+            with_payload=True,
+            with_vectors=False,
+            limit=batch_size,
+            offset=offset
+        )
+        all_points.extend(batch)
+        if offset is None:
+            break
+        
+    print(f"Total points: {len(all_points)}")
+
+    # 2. Tìm duplicate
+    seen_payloads = {}
+    ids_to_delete = []
+    for point in all_points:
+        payload_key = str(sorted(point.payload.items()))
+        if payload_key in seen_payloads:
+            ids_to_delete.append(point.id)
+        else:
+            seen_payloads[payload_key] = point.id
+
+    print(f"Found {len(ids_to_delete)} duplicates")
+    if not ids_to_delete:
+        return
+
+    # 3. Xóa theo batch (tránh request quá lớn)
+    for i in tqdm(range(0, len(ids_to_delete), batch_size), desc="Deleting duplicates"):
+        batch = ids_to_delete[i:i + batch_size]
+        client.delete(
+            collection_name=collection_name,
+            points_selector=batch
+        )
+    print(f"Deleted {len(ids_to_delete)} duplicate points")
+
+if __name__ == "__main__":
     #embedding_model = GTE()
+    loader = VietnameseDataLoader()
     
     # ingest = Ingest(country="vn", embedding_model=embedding_model)
     # BATCH = 5000
-    # total = ingest.loader.total_rows()
+    # total = loader.total_rows()
     # for offset in range(0, total, BATCH):
     #     ingest.process(batch_size=BATCH, offset=offset)
     
     # ingest = Ingest(country="vn", embedding_model=embedding_model)
     # vector_db = Qdrant("vn_documents")
+    
     #query_vector = embedding_model.embed_query("người lao động phải đóng bảo hiểm xã hội bao nhiêu tiền?")
     # start = time.time()
     # results = vector_db.dense_search(query_vector, top_k=5)
@@ -146,7 +177,9 @@ def _count_duplicates(client, collection_name: str, limit: int = 500):
     # collection_info = ingest.vector_db.client.get_collection(ingest.vector_db.collection_name)
     # print(f"collection size: {collection_info.points_count}")
 
-
+    qdrant = Qdrant("vn_documents")
+    _delete_duplicates(qdrant.client, qdrant.collection_name)
+    _count_duplicates(qdrant.client, qdrant.collection_name, limit=16000)
     
     
 

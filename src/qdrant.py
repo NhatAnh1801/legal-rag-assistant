@@ -72,3 +72,4 @@ class Qdrant:
         return str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{doc_id}_{chunk_index}"))
     
     
+    

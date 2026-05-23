@@ -31,6 +31,10 @@ class VietnameseDataLoader(BaseDataLoader):
                 m.co_quan_ban_hanh,
                 m.linh_vuc,
                 m.nganh,
+                m.ngay_co_hieu_luc,
+                m.ngay_het_hieu_luc,
+                m.nguoi_ky,
+                m.pham_vi,
                 c.content_html
             FROM read_parquet('{VN_BASE_PATH}/data/metadata.parquet') m
             JOIN(
@@ -39,7 +43,7 @@ class VietnameseDataLoader(BaseDataLoader):
                 WHERE content_html IS NOT NULL
             ) c
             ON CAST(m.id AS VARCHAR) = c.id
-            WHERE c.content_html IS NOT NULL
+            WHERE c.content_html IS NOT NULL AND m.tinh_trang_hieu_luc = 'Còn hiệu lực'
             ORDER BY m.id
         """
         if batch_size is not None:
