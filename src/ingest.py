@@ -1,38 +1,26 @@
-import re
-from typing import Counter
-from src.models.embeddings.gte_multi_base import GTE    # Temporary
-
-from src.processing.vn import VietnameseDocumentProcessor
 from src.data_loader.vn import VietnameseDataLoader
-from src.qdrant import Qdrant
-
 from concurrent.futures import ProcessPoolExecutor
+from src.ingest_config import *
 from tqdm import tqdm   
 import hashlib
 import json
 import os
-import time
 
-LOADER = {"vn": VietnameseDataLoader}
-PROCESSOR = {"vn": VietnameseDocumentProcessor}
-VECTOR_DB = {"vn": ("vn_documents", Qdrant)}
-HASH_CACHE_PATH = {"vn": "./data/cache/vn_hashes.json"}
 
 class Ingest:
-    def __init__(self, country: str, embedding_model):
-        self.loader = LOADER[country]()
-        self.processor = PROCESSOR[country]()
-        self.embedding_model = embedding_model
-        self.country = country
+    def __init__(self, country: str):
+        self.config = get_country_config(country)
         
-        # Vector database
-        collection_name, qdrant_cls = VECTOR_DB[country]
-        self.vector_db = qdrant_cls(collection_name)
+        self.loader = self.config.loader_class()
+        self.processor = self.config.processor_class()
+        self.embedding_model = self.config.embedding_model
+        
+        self.collection_name = self.config.collection_name
+        self.vector_db = self.config.vector_db_class(self.collection_name)
         self.vector_db.create_collection()
-    
-        # Cache
-        self.hash_cache_path = HASH_CACHE_PATH[country]
-        self._load_hash_cache()
+        
+        self.hash_cache_path = self.config.hash_cache_path
+        self._load_hash_cache() 
     
     def process(self, batch_size: int=None, offset: int=None):
         df = self.loader.load(batch_size=batch_size, offset=offset)
@@ -40,23 +28,16 @@ class Ingest:
         rows_to_process = []
         # Check if the content has been processed
         for _, row in tqdm(df.iterrows(), total=len(df), desc=f"Checking {self.country} documents"):
-            doc_id = str(row["id"])
-            current_hash = self._content_hash(row["content_html"])
+            doc_id = str(row[self.config.id_field])
+            current_hash = self._content_hash(self.config.content_field)
             if self.hash_cache.get(doc_id) == current_hash:
                 continue
-            doc_metadata = {
-                "doc_id": str(row["id"]),
-                "title": row["title"],
-                "loai_van_ban": row["loai_van_ban"],
-                "country": self.country
-            }
+            doc_metadata = {**self.config.metadata_fields, **row.to_dict()}
             rows_to_process.append((row, doc_metadata, current_hash))
         
-        # Process the rows needed to be processed
         args = [(row, meta) for row, meta, _ in rows_to_process]
-        # start = time.time()
         with ProcessPoolExecutor(max_workers=8) as executor:
-            results = list(tqdm(executor.map(_process_row, args), total=len(args), desc=f"Processing {self.country} documents"))
+            results = list(tqdm(executor.map(_process_row, args, self.config), total=len(args), desc=f"Processing {self.config.country} documents"))
         
         chunks = []
         for _, (result, (_, _, current_hash)) in enumerate(zip(results, rows_to_process)):
@@ -65,7 +46,6 @@ class Ingest:
             if doc_id:
                 self.hash_cache[doc_id] = current_hash
         
-        # Embed the chunks and upsert to vector database if there are chunks to process
         if chunks:
             embeddings = self.embedding_model.embed_documents([chunk["content"] for chunk in chunks])
             self.vector_db.upsert_chunks(chunks, embeddings)
@@ -88,10 +68,11 @@ class Ingest:
     def _content_hash(self, html: str) -> str:
         return hashlib.md5(html.encode()).hexdigest()
 
-def _process_row(args):
+def _process_row(args, config: CountryConfig):
     row, doc_metadata = args
-    processor = VietnameseDocumentProcessor()
-    return processor.process(raw_content=row["content_html"], doc_metadata=doc_metadata)
+    processor = config.processor_class()
+    raw_content = row[config.content_field]
+    return processor.process(raw_content=raw_content, doc_metadata=doc_metadata)
 
 def _count_duplicates(client, collection_name: str, limit: int = 500):
     all_points, _ = client.scroll(
@@ -152,6 +133,7 @@ def _delete_duplicates(client, collection_name: str, batch_size: int = 1000):
         )
     print(f"Deleted {len(ids_to_delete)} duplicate points")
 
+from src.models.embeddings.gte_multi_base import GTE 
 if __name__ == "__main__":
     #embedding_model = GTE()
     loader = VietnameseDataLoader()

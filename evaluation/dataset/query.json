@@ -1,0 +1,407 @@
+[
+    {
+      "query": "Căn cứ pháp lý và sắc lệnh nào được sử dụng để tổ chức các cơ quan Lao động địa phương liên khu và tỉnh?",
+      "expected_chunk_id": "root",
+      "document_id": 1
+    },
+    {
+      "query": "Cơ quan nào sẽ thay thế các Sở Lao động cũ và do ai đứng đầu?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 1
+    },
+    {
+      "query": "Trong trường hợp các tỉnh kế cận nhau có ít vấn đề lao động thì tổ chức thế nào?",
+      "expected_chunk_id": "root.điều_2",
+      "document_id": 1
+    },
+    {
+      "query": "Những chức danh nào chịu trách nhiệm thi hành nghị định tổ chức các cơ quan Lao động địa phương liên khu và tỉnh?",
+      "expected_chunk_id": "root.điều_3",
+      "document_id": 1
+    },
+    {
+      "query": "Nghị định thành lập hội đồng ấn định lương cho công nhân tại mỗi liên khu dựa trên những sắc lệnh nào?",
+      "expected_chunk_id": "root",
+      "document_id": 2
+    },
+    {
+      "query": "Mục đích thành lập Hội đồng tại mỗi liên khu kháng chiến hành chính trong toàn quốc là gì?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 2
+    },
+    {
+      "query": "Thành phần ban hội đồng ấn định lương tối thiểu cho công nhân gồm những ai và ai có quyền duyệt y danh sách?",
+      "expected_chunk_id": "root.điều_2",
+      "document_id": 2
+    },
+    {
+      "query": "Hội đồng ấn định lương cho công nhân họp định kỳ vào thời gian nào và ai có quyền triệu tập phiên họp bất thường?",
+      "expected_chunk_id": "root.điều_3",
+      "document_id": 2
+    },
+    {
+      "query": "Hội đồng dựa vào tiêu chuẩn nào để định lương tối thiểu và đặt giá nhân công tối đa nhằm mục đích gì?",
+      "expected_chunk_id": "root.điều_4",
+      "document_id": 2
+    },
+    {
+      "query": "Quyết nghị của Hội đồng định lương được công bố bởi ai và thủ tục gửi lên Bộ trưởng Bộ Lao động quy định như thế nào?",
+      "expected_chunk_id": "root.điều_5",
+      "document_id": 2
+    },
+    {
+      "query": "Các thành viên trong Hội đồng định giá lương tối thiểu được hưởng mức phụ cấp và chế độ tiền nong như thế nào cho mỗi ngày họp?",
+      "expected_chunk_id": "root.điều_6",
+      "document_id": 2
+    },
+    {
+      "query": "Kinh phí hoạt động của Hội đồng ấn định lương liên khu do ngân sách của cơ quan nào đài thọ?",
+      "expected_chunk_id": "root.điều_7",
+      "document_id": 2
+    },
+    {
+      "query": "Những cá nhân, cơ quan nào chịu trách nhiệm thi hành nghị định thành lập hội đồng ấn định lương cho công nhân?",
+      "expected_chunk_id": "root.điều_8",
+      "document_id": 2
+    },
+    {
+      "query": "Bộ trưởng Bộ Lao động ban hành nghị định ấn định nhiệm vụ và quyền hạn của các Sở và Ty Lao động dựa trên các sắc lệnh nào?",
+      "expected_chunk_id": "root",
+      "document_id": 3
+    },
+    {
+      "query": "Nhiệm vụ cụ thể của Sở Lao động liên khu trong phạm vi liên khu của mình là gì?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 3
+    },
+    {
+      "query": "Nhiệm vụ của Ty Lao động trong phạm vi tỉnh được quy định như thế nào và trường hợp không có Ty Lao động thì ai phụ trách?",
+      "expected_chunk_id": "root.điều_2",
+      "document_id": 3
+    },
+    {
+      "query": "Thể thức liên lạc và điều khiển giữa các sở, ty lao động với các cấp hành chính kháng chiến tương đương khi chiến sự xảy ra quy định ra sao?",
+      "expected_chunk_id": "root.điều_3",
+      "document_id": 3
+    },
+    {
+      "query": "Quy định về việc tuyên thệ bảo mật thông tin trước khi nhận việc của các Giám đốc và Trưởng ty Lao động được tổ chức như thế nào?",
+      "expected_chunk_id": "root.điều_4",
+      "document_id": 3
+    },
+    {
+      "query": "Các khoản chi phí hoạt động của các sở, ty và ủy viên hành chính kháng chiến phụ trách lao động được tính vào ngân sách nào?",
+      "expected_chunk_id": "root.điều_5",
+      "document_id": 3
+    },
+    {
+      "query": "Ai chịu trách nhiệm thi hành nghị định ấn định nhiệm vụ và quyền hạn của các Sở và Ty Lao động?",
+      "expected_chunk_id": "root.điều_6",
+      "document_id": 3
+    },
+    {
+      "query": "Văn bản pháp lý nào làm căn cứ để ban hành nghị định thành lập phòng giới thiệu công nhân tại Bộ Lao động và các liên khu?",
+      "expected_chunk_id": "root",
+      "document_id": 4
+    },
+    {
+      "query": "Phòng giới thiệu công nhân được thành lập tại những cấp cơ quan nào?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 4
+    },
+    {
+      "query": "Mục đích chính của việc thành lập các Phòng giới thiệu công nhân là gì?",
+      "expected_chunk_id": "root.điều_2",
+      "document_id": 4
+    },
+    {
+      "query": "Ai có thẩm quyền bổ nhiệm và chỉ định người phụ trách Phòng giới thiệu công nhân tại Bộ, liên khu và các tỉnh?",
+      "expected_chunk_id": "root.điều_3",
+      "document_id": 4
+    },
+    {
+      "query": "Trách nhiệm và phận sự của người phụ trách phòng giới thiệu công nhân tại Bộ Lao động là gì?",
+      "expected_chunk_id": "root.điều_4",
+      "document_id": 4
+    },
+    {
+      "query": "Mỗi phòng giới thiệu công nhân bắt buộc phải quản lý và lưu trữ 2 quyển sổ có nội dung gì?",
+      "expected_chunk_id": "root.điều_5",
+      "document_id": 4
+    },
+    {
+      "query": "Quy định về việc sử dụng quỹ ứng trước để hỗ trợ tiền ăn đường cho nhân công tại Phòng giới thiệu công nhân liên khu như thế nào?",
+      "expected_chunk_id": "root.điều_6",
+      "document_id": 4
+    },
+    {
+      "query": "Mức thù lao hàng tháng dành cho người phụ trách Phòng giới thiệu công nhân cấp tỉnh không thuộc biên chế Bộ Lao động là bao nhiêu?",
+      "expected_chunk_id": "root.điều_7",
+      "document_id": 4
+    },
+    {
+      "query": "Chế độ báo cáo thống kê định kỳ của Phòng giới thiệu công nhân các tỉnh và liên khu về trung ương được quy định như thế nào?",
+      "expected_chunk_id": "root.điều_8",
+      "document_id": 4
+    },
+    {
+      "query": "Nguồn ngân sách nào chi trả cho các khoản chi phí hoạt động của Phòng giới thiệu công nhân?",
+      "expected_chunk_id": "root.điều_9",
+      "document_id": 4
+    },
+    {
+      "query": "Những chức danh nào có trách nhiệm thi hành nghị định thành lập phòng giới thiệu công nhân?",
+      "expected_chunk_id": "root.điều_10",
+      "document_id": 4
+    },
+    {
+      "query": "Nghị định ấn định chế độ nhân viên Bộ Quốc phòng được ban hành dựa trên những căn cứ và đề nghị của ai?",
+      "expected_chunk_id": "root",
+      "document_id": 5
+    },
+    {
+      "query": "Đối tượng nào được hưởng chế độ quy định trong nghị định của Bộ Quốc phòng?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 5
+    },
+    {
+      "query": "Tiêu đề của Chương I trong nghị định Bộ Quốc phòng quy định về nội dung gì?",
+      "expected_chunk_id": "root.chương_I",
+      "document_id": 5
+    },
+    {
+      "query": "Nhân viên quốc phòng được xếp vào các ngạch nào và thang lương chính hàng tháng cho từng cấp được quy định cụ thể ra sao?",
+      "expected_chunk_id": "root.chương_I.điều_2",
+      "document_id": 5
+    },
+    {
+      "query": "Quy định về tỷ lệ tăng lương chính hàng tháng căn cứ vào giá sinh hoạt trong năm 1949 là bao nhiêu phần trăm?",
+      "expected_chunk_id": "root.chương_I.điều_3",
+      "document_id": 5
+    },
+    {
+      "query": "Ngoài lương chính, nhân viên quốc phòng được hưởng những loại phụ cấp nào (gia đình, đắt đỏ, khu vực) và mức tính cụ thể ra sao?",
+      "expected_chunk_id": "root.chương_I.điều_4",
+      "document_id": 5
+    },
+    {
+      "query": "Điều kiện để vợ và con của nhân viên quốc phòng được hưởng phụ cấp gia đình và phụ cấp đắt đỏ là gì? Trường hợp hai vợ chồng đều là công chức thì giải quyết thế nào?",
+      "expected_chunk_id": "root.chương_I.điều_5",
+      "document_id": 5
+    },
+    {
+      "query": "Trường hợp nhân viên phụ nữ có chồng không hưởng lương chính phủ hoặc chồng bị tàn tật thì chế độ phụ cấp cho con và chồng được tính thế nào?",
+      "expected_chunk_id": "root.chương_I.điều_6",
+      "document_id": 5
+    },
+    {
+      "query": "Nhân viên quốc phòng nhập ngũ sẽ được hưởng chế độ theo quy định nào?",
+      "expected_chunk_id": "root.chương_I.điều_7",
+      "document_id": 5
+    },
+    {
+      "query": "Tiêu đề của Chương II trong nghị định Bộ Quốc phòng nói về nội dung gì?",
+      "expected_chunk_id": "root.chương_II",
+      "document_id": 5
+    },
+    {
+      "query": "Thẩm quyền tuyển dụng nhân viên quốc phòng các ngạch từ cán sự trở lên và ngạch tá sự thuộc về những ai?",
+      "expected_chunk_id": "root.chương_II.điều_8",
+      "document_id": 5
+    },
+    {
+      "query": "Muốn được tuyển làm nhân viên quốc phòng cần phải đáp ứng những điều kiện cơ bản nào về độ tuổi, quốc tịch và sức khỏe?",
+      "expected_chunk_id": "root.chương_II.điều_9",
+      "document_id": 5
+    },
+    {
+      "query": "Tiêu chuẩn về trình độ văn hóa (bằng cấp) hoặc năng lực chuyên môn để xếp nhân viên vào các ngạch Giám sự, Kiểm sự, Tham sự, Cán sự, Tá sự quy định ra sao?",
+      "expected_chunk_id": "root.chương_II.điều_10",
+      "document_id": 5
+    },
+    {
+      "query": "Thời gian tập sự của nhân viên quốc phòng kéo dài bao lâu và kết quả sau thời kỳ tập sự gồm những trường hợp nào?",
+      "expected_chunk_id": "root.chương_II.điều_11",
+      "document_id": 5
+    },
+    {
+      "query": "Chế độ ngạch cấp và thời hạn tập sự đối với nhân viên thuộc diện trưng tập được quy định như thế nào?",
+      "expected_chunk_id": "root.chương_II.điều_12",
+      "document_id": 5
+    },
+    {
+      "query": "Đối tượng Thương binh và Cựu binh được hưởng quyền ưu tiên gì khi xin tuyển dụng vào Bộ Quốc phòng?",
+      "expected_chunk_id": "root.chương_II.điều_13",
+      "document_id": 5
+    },
+    {
+      "query": "Việc tuyển dụng đối với đồng bào miền núi vào làm nhân viên quốc phòng được quyết định như thế nào?",
+      "expected_chunk_id": "root.chương_II.điều_14",
+      "document_id": 5
+    },
+    {
+      "query": "Nhân viên cũ của Bộ Quốc phòng hoặc từ bộ khác xin tuyển dụng lại sau khi thôi việc sẽ được xếp ngạch cấp theo nguyên tắc nào?",
+      "expected_chunk_id": "root.chương_II.điều_15",
+      "document_id": 5
+    },
+    {
+      "query": "Hạn thâm niên tối thiểu để nhân viên quốc phòng được xét thăng lên cấp trên là bao nhiêu năm?",
+      "expected_chunk_id": "root.chương_II.điều_16",
+      "document_id": 5
+    },
+    {
+      "query": "Trường hợp nào nhân viên quốc phòng được đặc cách cho thăng cấp trước thời hạn thường lệ?",
+      "expected_chunk_id": "root.chương_II.điều_17",
+      "document_id": 5
+    },
+    {
+      "query": "Thời gian tái ngũ của nhân viên tòng ngũ được tính vào hạn thâm niên trong ngạch cấp như thế nào?",
+      "expected_chunk_id": "root.chương_II.điều_18",
+      "document_id": 5
+    },
+    {
+      "query": "Mỗi năm có bao nhiêu kỳ thăng thưởng cho nhân viên quốc phòng và rơi vào những ngày kỷ niệm nào?",
+      "expected_chunk_id": "root.chương_II.điều_19",
+      "document_id": 5
+    },
+    {
+      "query": "Thành phần và phương thức làm việc của Hội đồng thăng thưởng xét hồ sơ cho nhân viên từ ngạch Cán sự trở lên quy định như thế nào?",
+      "expected_chunk_id": "root.chương_II.điều_20",
+      "document_id": 5
+    },
+    {
+      "query": "Cơ cấu hội đồng thăng thưởng cho nhân viên ngạch tá sự tại các phòng sự vụ, quân vụ, văn phòng và các Cục, Nha được quy định ra sao?",
+      "expected_chunk_id": "root.chương_II.điều_21",
+      "document_id": 5
+    },
+    {
+      "query": "Làm thế nào để nhân viên quốc phòng ở các ngạch thấp có thể được chuyển lên ngạch trên?",
+      "expected_chunk_id": "root.chương_II.điều_22",
+      "document_id": 5
+    },
+    {
+      "query": "Những nhân viên được tuyển trước ngày ký nghị định sẽ được chuyển sang ngạch, cấp mới dựa trên cơ sở nào?",
+      "expected_chunk_id": "root.chương_II.điều_23",
+      "document_id": 5
+    },
+    {
+      "query": "Thành phần, số lượng thành viên tối thiểu tham gia thảo luận và thủ tục lập danh sách của Hội đồng chuyển ngạch nhân viên từ cấp cán sự trở lên quy định thế nào?",
+      "expected_chunk_id": "root.chương_II.điều_24",
+      "document_id": 5
+    },
+    {
+      "query": "Hội đồng chuyển ngạch cho nhân viên ngạch tá sự tại các phòng ban, Cục, Nha do ai ra quyết định cử và thành phần gồm những ai?",
+      "expected_chunk_id": "root.chương_II.điều_25",
+      "document_id": 5
+    },
+    {
+      "query": "Thẩm quyền bổ nhiệm và thuyên chuyển nhân viên thuộc các ngạch (tá sự, cán sự, tham sự, kiểm sự, giám sự) được phân cấp cụ thể ra sao?",
+      "expected_chunk_id": "root.chương_II.điều_26",
+      "document_id": 5
+    },
+    {
+      "query": "Chế độ nghỉ phép hàng năm của nhân viên quốc phòng được quy định bao nhiêu ngày và có tính thời gian đi đường không?",
+      "expected_chunk_id": "root.chương_II.điều_27",
+      "document_id": 5
+    },
+    {
+      "query": "Khi nhân viên quốc phòng đau yếu vào điều trị tại quân y viện thì chế độ sinh hoạt phí, tiền ăn và thuốc men được chi trả thế nào?",
+      "expected_chunk_id": "root.chương_II.điều_28",
+      "document_id": 5
+    },
+    {
+      "query": "Quy định về thời gian nghỉ dưỡng bệnh hưởng nguyên lương đối với nhân viên làm việc trên 1 năm và dưới 1 năm khi bị bệnh tật là bao lâu?",
+      "expected_chunk_id": "root.chương_II.điều_29",
+      "document_id": 5
+    },
+    {
+      "query": "Nhân viên phụ nữ trong thời kỳ thai sản được nghỉ bao nhiêu tháng và hưởng quyền lợi lương bổng như thế nào?",
+      "expected_chunk_id": "root.chương_II.điều_30",
+      "document_id": 5
+    },
+    {
+      "query": "Thời gian tối đa nhân viên quốc phòng được phép xin nghỉ dài hạn không lương là bao lâu và sau thời hạn đó không đi làm lại thì xử lý thế nào?",
+      "expected_chunk_id": "root.chương_II.điều_31",
+      "document_id": 5
+    },
+    {
+      "query": "Thể thức áp dụng cho việc cho nhân viên nghỉ việc tuân theo quy định nào?",
+      "expected_chunk_id": "root.chương_II.điều_32",
+      "document_id": 5
+    },
+    {
+      "query": "Mức trợ cấp và đối tượng nhận trợ cấp khi nhân viên quốc phòng từ trần hoặc hy sinh tính mạng vì công vụ được tính như thế nào?",
+      "expected_chunk_id": "root.chương_II.điều_33",
+      "document_id": 5
+    },
+    {
+      "query": "Nhân viên quốc phòng thôi việc vì lý do khách quan (không phải phạm tội hay tự xin thôi) được hưởng khoản trợ cấp thôi việc tính theo thâm niên như thế nào?",
+      "expected_chunk_id": "root.chương_II.điều_34",
+      "document_id": 5
+    },
+    {
+      "query": "Nội dung chính của Chương III quy định về chế độ gì cho nhân viên Bộ Quốc phòng?",
+      "expected_chunk_id": "root.chương_III",
+      "document_id": 5
+    },
+    {
+      "query": "Trong khi chờ chế độ hưu bổng chung, nhân viên chính ngạch phải nộp vào quỹ hưu bổng mức trích từ lương chính là bao nhiêu phần trăm?",
+      "expected_chunk_id": "root.chương_III.điều_36",
+      "document_id": 5
+    },
+    {
+      "query": "Hạn thâm niên của nhân viên quốc phòng được tính bắt đầu từ mốc thời gian cụ thể nào?",
+      "expected_chunk_id": "root.chương_III.điều_37",
+      "document_id": 5
+    },
+    {
+      "query": "Tiêu đề của Chương IV trong văn bản quy định về nội dung gì đối với nhân viên Bộ Quốc phòng?",
+      "expected_chunk_id": "root.chương_IV",
+      "document_id": 5
+    },
+    {
+      "query": "Hành vi vô cớ bỏ việc của nhân viên Bộ quốc phòng sẽ bị khép vào tội gì và xử lý ở đâu?",
+      "expected_chunk_id": "root.chương_IV.điều_38",
+      "document_id": 5
+    },
+    {
+      "query": "Nhân viên phạm kỷ luật có quyền lợi gì khi bị đưa ra trước hội đồng kỷ luật để tự bảo vệ mình?",
+      "expected_chunk_id": "root.chương_IV.điều_39",
+      "document_id": 5
+    },
+    {
+      "query": "Quy định về việc huyền chức, bãi chức và truy lĩnh lương, phụ cấp đối với nhân viên quốc phòng bị truy tố trước tòa án như thế nào?",
+      "expected_chunk_id": "root.chương_IV.điều_40",
+      "document_id": 5
+    },
+    {
+      "query": "Tiêu đề của Chương V đề cập đến đối tượng nhân sự nào trong Bộ Quốc phòng?",
+      "expected_chunk_id": "root.chương_V",
+      "document_id": 5
+    },
+    {
+      "query": "Trong trường hợp nào Bộ Quốc phòng được tuyển dụng nhân viên tạm thời?",
+      "expected_chunk_id": "root.chương_V.điều_41",
+      "document_id": 5
+    },
+    {
+      "query": "Tiêu đề của Chương VI quy định về nội dung gì?",
+      "expected_chunk_id": "root.chương_VI",
+      "document_id": 5
+    },
+    {
+      "query": "Nghị định ấn định chế độ nhân viên Bộ Quốc phòng bắt đầu có hiệu lực thi hành kể từ ngày tháng năm nào?",
+      "expected_chunk_id": "root.chương_VI.điều_42",
+      "document_id": 5
+    },
+    {
+      "query": "Nghị định số 57-NĐ/CB ngày 16/8/1947 có còn hiệu lực sau khi nghị định mới của Bộ Quốc phòng được ban hành không?",
+      "expected_chunk_id": "root.chương_VI.điều_43",
+      "document_id": 5
+    },
+    {
+      "query": "Những chức danh và cơ quan nào trực thuộc Bộ Quốc phòng chịu trách nhiệm thi hành nghị định ấn định chế độ nhân viên?",
+      "expected_chunk_id": "root.chương_VI.điều_44",
+      "document_id": 5
+    }
+  ]

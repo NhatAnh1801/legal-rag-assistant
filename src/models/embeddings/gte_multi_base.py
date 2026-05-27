@@ -1,13 +1,12 @@
 import torch
 import torch.nn.functional as F
 from transformers import AutoModel, AutoTokenizer
-from langchain_core.embeddings import Embeddings
 from typing import List
 import time
 
 from tqdm import tqdm
 
-class GTE(Embeddings):
+class GTE():
     def __init__(self, batch_size: int=32):
         self.model_name_or_path = 'Alibaba-NLP/gte-multilingual-base'
         self.model = AutoModel.from_pretrained(
