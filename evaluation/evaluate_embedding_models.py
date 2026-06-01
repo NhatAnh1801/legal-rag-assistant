@@ -1,5 +1,3 @@
-from src.data_loader.vn import VietnameseDataLoader
-from src.processing.vn import VietnameseDocumentProcessor
 from src.models.embeddings.vn_law_embedding import VNLawEmbedding
 from src.models.embeddings.vietnamese_embedding import VietnameseEmbedding
 from src.models.embeddings.gte_multi_base import GTE
@@ -113,5 +111,3 @@ def evaluate_embedding_models():
     df = pd.DataFrame(results)
     print("==== Evaluation Results ====")
     print(df.to_string(index=False))
-
-    

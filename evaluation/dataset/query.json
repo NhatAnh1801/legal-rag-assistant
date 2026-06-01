@@ -403,5 +403,625 @@
       "query": "Những chức danh và cơ quan nào trực thuộc Bộ Quốc phòng chịu trách nhiệm thi hành nghị định ấn định chế độ nhân viên?",
       "expected_chunk_id": "root.chương_VI.điều_44",
       "document_id": 5
+    },
+    {
+      "query": "Văn bản nào quy định về chế độ cho công chức nghỉ đẻ, nuôi con bú và đi bệnh viện của Bộ Nội vụ, Bộ Tài chính và Bộ Y tế?",
+      "expected_chunk_id": "root",
+      "document_id": 6
+    },
+    {
+      "query": "Tôi muốn biết thông tin về văn bản ban hành từ thời kháng chiến quy định các chế độ nghỉ ốm dài ngày như ho lao hay hủi cho cán bộ nhà nước?",
+      "expected_chunk_id": "root",
+      "document_id": 6
+    },
+    {
+      "query": "Nghị định quy định về việc điều trị tại bệnh viện, nghỉ dưỡng bệnh và chế độ thai sản áp dụng cho những đối tượng nào cụ thể?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 6
+    },
+    {
+      "query": "Vợ tôi là cán bộ nhà nước sắp sinh em bé thì có được áp dụng quy định nghỉ đẻ và nghỉ cho con bú theo điều luật cũ không?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 6
+    },
+    {
+      "query": "Cán bộ biên chế, nhân viên làm việc theo hợp đồng và người nhà của họ đi khám bệnh có phải trả tiền thuốc không?",
+      "expected_chunk_id": "root.điều_2",
+      "document_id": 6
+    },
+    {
+      "query": "Bố tôi là công chức chính ngạch vừa phải nhập viện cấp cứu, khi lấy thuốc điều trị tại bệnh viện thì gia đình tôi có được miễn phí hoàn toàn không?",
+      "expected_chunk_id": "root.điều_2",
+      "document_id": 6
+    },
+    {
+      "query": "Cán bộ nhà nước nằm viện điều trị thì tiền ăn và tiền lương được giải quyết như thế nào?",
+      "expected_chunk_id": "root.điều_3",
+      "document_id": 6
+    },
+    {
+      "query": "Tôi là công chức đang phải nằm viện một tháng, nghe nói nếu ăn cơm của nhà bếp bệnh viện nấu thì tôi sẽ được giảm một nửa tiền ăn đúng không và lương có bị trừ không?",
+      "expected_chunk_id": "root.điều_3",
+      "document_id": 6
+    },
+    {
+      "query": "Thời gian nghỉ ốm tối đa của cán bộ chính ngạch là bao lâu và mức lương giảm dần theo các tháng như thế nào?",
+      "expected_chunk_id": "root.điều_4",
+      "document_id": 6
+    },
+    {
+      "query": "Anh trai tôi là công chức nhà nước bị bệnh nặng phải xin nghỉ dưỡng bệnh tận 10 tháng nay. Cho hỏi chế độ tiền lương và trợ cấp gia đình của anh tôi sẽ bị cắt giảm cụ thể ra sao qua từng giai đoạn?",
+      "expected_chunk_id": "root.điều_4",
+      "document_id": 6
+    },
+    {
+      "query": "Quy định về thời gian nghỉ dưỡng sức và tỷ lệ hưởng lương của nhân viên hợp đồng tùy theo thâm niên làm việc?",
+      "expected_chunk_id": "root.điều_5",
+      "document_id": 6
+    },
+    {
+      "query": "Tôi ký hợp đồng làm việc cho cơ quan nhà nước được 1,5 năm thì bị ốm phải xin nghỉ chữa bệnh mất 5 tháng. Tôi sẽ được nhận bao nhiêu phần trăm lương hợp đồng và phụ cấp trong thời gian này?",
+      "expected_chunk_id": "root.điều_5",
+      "document_id": 6
+    },
+    {
+      "query": "Thời hạn cho mỗi lần ký giấy xin nghỉ ốm dưỡng bệnh của cán bộ biên chế và nhân viên hợp đồng tối đa là mấy tháng?",
+      "expected_chunk_id": "root.điều_6",
+      "document_id": 6
+    },
+    {
+      "query": "Tôi là nhân viên làm theo hợp đồng đang làm hồ sơ xin nghỉ ốm, cơ quan bảo mỗi đợt nghỉ không được duyệt quá 2 tháng một lần có đúng luật không?",
+      "expected_chunk_id": "root.điều_6",
+      "document_id": 6
+    },
+    {
+      "query": "Muốn xin nghỉ ốm từ một tháng trở lên thì công chức phải qua tổ chức y tế nào khám nghiệm và đề xuất?",
+      "expected_chunk_id": "root.điều_7",
+      "document_id": 6
+    },
+    {
+      "query": "Bác sĩ điều trị bảo tôi phải nghỉ ngơi dưỡng bệnh ít nhất 2 tháng mới hồi phục, tôi có cần phải đem hồ sơ bệnh án ra Hội đồng Giám định Y khoa để họ duyệt và kiến nghị với cơ quan không?",
+      "expected_chunk_id": "root.điều_7",
+      "document_id": 6
+    },
+    {
+      "query": "Nếu cán bộ nghỉ hết thời gian dưỡng bệnh tối đa mà vẫn không khỏi thì bị giải quyết cho nghỉ việc hay nghỉ không lương?",
+      "expected_chunk_id": "root.điều_8",
+      "document_id": 6
+    },
+    {
+      "query": "Đồng nghiệp của tôi đã xin nghỉ ốm đau dưỡng bệnh hết sạch số tháng quy định rồi nhưng sức khỏe vẫn rất yếu không thể đi làm lại. Cơ quan sẽ cho anh ấy nghỉ dài hạn không ăn lương hay bắt buộc phải thôi việc?",
+      "expected_chunk_id": "root.điều_8",
+      "document_id": 6
+    },
+    {
+      "query": "Những ngày tháng nghỉ ở nhà chữa bệnh có được cộng vào năm công tác để tính nâng lương hay lương hưu không?",
+      "expected_chunk_id": "root.điều_9",
+      "document_id": 6
+    },
+    {
+      "query": "Tôi phải nghỉ dưỡng bệnh mất mấy tháng trời, không biết thời gian tôi ở nhà điều trị này có được tính vào thâm niên để sau này xét thăng tiến hoặc tính tiền lương hưu khi về già không?",
+      "expected_chunk_id": "root.điều_9",
+      "document_id": 6
+    },
+    {
+      "query": "Nghỉ dưỡng bệnh có bị trừ vào số ngày nghỉ phép năm của công chức không?",
+      "expected_chunk_id": "root.điều_10",
+      "document_id": 6
+    },
+    {
+      "query": "Năm nay tôi đã xin nghỉ mất 2 tháng để điều trị phục hồi sức khỏe, đến cuối năm tôi muốn xin nghỉ phép năm để giải quyết việc gia đình thì cơ quan có quyền trừ số ngày nghỉ phép này của tôi không?",
+      "expected_chunk_id": "root.điều_10",
+      "document_id": 6
+    },
+    {
+      "query": "Thời gian được nghỉ trước và sau khi sinh con đối với nữ cán bộ, nhân viên tạm thời hay hợp đồng là bao lâu?",
+      "expected_chunk_id": "root.điều_11",
+      "document_id": 6
+    },
+    {
+      "query": "Tôi là nữ nhân viên tuyển dụng tạm thời của cơ quan, dự kiến còn 1 tháng nữa là đến ngày sinh đẻ. Theo quy định tôi được nghỉ ở nhà từ bây giờ và sau khi sinh tổng cộng bao nhiêu lâu?",
+      "expected_chunk_id": "root.điều_11",
+      "document_id": 6
+    },
+    {
+      "query": "Trong mấy tháng nghỉ đẻ thì nữ cán bộ có được nhận nguyên lương và tiền phụ cấp không?",
+      "expected_chunk_id": "root.điều_12",
+      "document_id": 6
+    },
+    {
+      "query": "Em sắp sửa nghỉ chế độ thai sản sinh con, không biết trong thời gian nghỉ sinh em có được cơ quan trả đầy đủ tiền lương cùng các khoản phụ cấp giống như ngày đi làm bình thường không?",
+      "expected_chunk_id": "root.điều_12",
+      "document_id": 6
+    },
+    {
+      "query": "Giấy tờ bắt buộc phải nộp kèm theo đơn xin nghỉ sinh con của nữ công chức là gì?",
+      "expected_chunk_id": "root.điều_13",
+      "document_id": 6
+    },
+    {
+      "query": "Tuần sau em định nộp đơn xin nghỉ hộ sản lên ban lãnh đạo cơ quan, em có cần phải xin giấy chứng nhận của bác sĩ khám thai xác định ngày dự kiến sinh để kẹp vào đơn không?",
+      "expected_chunk_id": "root.điều_13",
+      "document_id": 6
+    },
+    {
+      "query": "Quy định về thời gian nghỉ giữa giờ làm việc để cho con bú áp dụng cho nữ cán bộ có con nhỏ dưới 1 tuổi?",
+      "expected_chunk_id": "root.điều_14",
+      "document_id": 6
+    },
+    {
+      "query": "Con tôi mới được 8 tháng tuổi, tôi đi làm lại tại cơ quan thì hằng ngày tôi được phép nghỉ bao nhiêu phút vào buổi sáng và buổi chiều để vắt sữa hoặc cho con bú tại phòng làm việc?",
+      "expected_chunk_id": "root.điều_14",
+      "document_id": 6
+    },
+    {
+      "query": "Thời gian nghỉ thai sản và giờ nghỉ nuôi con nhỏ có bị tính trừ vào ngày nghỉ phép hằng năm không?",
+      "expected_chunk_id": "root.điều_15",
+      "document_id": 6
+    },
+    {
+      "query": "Cơ quan bảo vì tôi đã nghỉ sinh con mất 2 tháng nên năm nay tôi không được giải quyết kỳ nghỉ phép năm nữa, cơ quan làm vậy có đúng với điều luật quy định không?",
+      "expected_chunk_id": "root.điều_15",
+      "document_id": 6
+    },
+    {
+      "query": "Chế độ nghỉ dài ngày tối đa và số lần gia hạn kiểm tra y tế đối với công chức chính ngạch bị ho lao hoặc phong?",
+      "expected_chunk_id": "root.điều_16",
+      "document_id": 6
+    },
+    {
+      "query": "Một cán bộ biên chế không may bị chẩn đoán mắc bệnh lao phổi và phải đi cách ly điều trị. Người này được nghỉ tối đa bao nhiêu tháng, và cứ sau mấy tháng thì phải ra Hội đồng Giám định Y khoa kiểm tra lại sức khỏe?",
+      "expected_chunk_id": "root.điều_16",
+      "document_id": 6
+    },
+    {
+      "query": "Mức hưởng lương và phụ cấp gia đình giảm dần ra sao trong 10 đợt nghỉ dài hạn do mắc bệnh hiểm nghèo?",
+      "expected_chunk_id": "root.điều_17",
+      "document_id": 6
+    },
+    {
+      "query": "Chồng tôi bị bệnh phong phải nghỉ điều trị dài ngày theo chế độ 60 tháng. Xin hỏi trong 6 hạn đầu tiên và 4 hạn cuối cùng thì số tiền lương cũng như tiền phụ cấp gia đình của nhà tôi sẽ được chi trả thế nào?",
+      "expected_chunk_id": "root.điều_17",
+      "document_id": 6
+    },
+    {
+      "query": "Ai là người có thẩm quyền kiểm tra và quản lý y tế đối với công chức trong suốt giai đoạn nghỉ chữa bệnh lao hoặc phong?",
+      "expected_chunk_id": "root.điều_18",
+      "document_id": 6
+    },
+    {
+      "query": "Tôi đang trong diện nghỉ dài hạn để chạy chữa bệnh lao tại quê nhà, vậy hằng tháng tôi phải chịu sự kiểm tra và quản lý y tế trực tiếp của vị chức sắc y tế nào ở cấp tỉnh?",
+      "expected_chunk_id": "root.điều_18",
+      "document_id": 6
+    },
+    {
+      "query": "Sau khi nghỉ hết 60 tháng chữa bệnh phong, lao mà công chức vẫn chưa khỏi hoặc đã khỏi bệnh thì xử lý thế nào?",
+      "expected_chunk_id": "root.điều_19",
+      "document_id": 6
+    },
+    {
+      "query": "Bác tôi đã nghỉ hết sạch 10 hạn chữa bệnh lao mà Hội đồng Y khoa khám lại bảo vẫn chưa khỏi hẳn bệnh. Trường hợp này bác tôi có được đi làm tiếp không hay phải thôi việc và có được nhận khoản tiền trợ cấp nào không?",
+      "expected_chunk_id": "root.điều_19",
+      "document_id": 6
+    },
+    {
+      "query": "Thời gian nghỉ dài ngày do ho lao hay hủi có được tính để xét nâng lương, nâng bậc hoặc tính lương hưu không?",
+      "expected_chunk_id": "root.điều_20",
+      "document_id": 6
+    },
+    {
+      "query": "Tôi lo lắng rằng việc mình phải xin nghỉ dài hạn nhiều năm để điều trị bệnh phong sẽ làm mất đi số năm thâm niên công tác để tính tiền hưu trí và xét tăng thưởng sau này, điều này có đúng không?",
+      "expected_chunk_id": "root.điều_20",
+      "document_id": 6
+    },
+    {
+      "query": "Biện pháp giải quyết đối với công nhân viên hợp đồng khi bị phát hiện mắc bệnh lao hoặc phong là gì?",
+      "expected_chunk_id": "root.điều_21",
+      "document_id": 6
+    },
+    {
+      "query": "Một nhân viên vừa ký hợp đồng làm việc tại xí nghiệp được vài tháng thì bị phát hiện mắc bệnh phong. Theo luật thời bấy giờ, xí nghiệp sẽ cho nghỉ điều trị hưởng lương hay bắt buộc phải cho thôi việc luôn?",
+      "expected_chunk_id": "root.điều_21",
+      "document_id": 6
+    },
+    {
+      "query": "Văn bản hướng dẫn chi tiết thực hiện nghị định liên bộ Nội vụ - Tài chính - Y tế do ai ban hành?",
+      "expected_chunk_id": "root.điều_22",
+      "document_id": 6
+    },
+    {
+      "query": "Để triển khai áp dụng đồng bộ các quy định về nghỉ ốm, thai sản, bệnh lao phong này xuống các địa phương, các cơ quan ban ngành cần tìm đọc văn bản hướng dẫn chi tiết nào của liên bộ?",
+      "expected_chunk_id": "root.điều_22",
+      "document_id": 6
+    },
+    {
+      "query": "Những chức danh lãnh đạo nào chịu trách nhiệm tổ chức thi hành nghị định về chế độ bệnh tật và thai sản của công chức?",
+      "expected_chunk_id": "root.điều_23",
+      "document_id": 6
+    },
+    {
+      "query": "Cho tôi hỏi ai là người có trách nhiệm triển khai và giám sát việc thực hiện các điều khoản trong nghị định đặt thể lệ điều trị bệnh viện và hộ sản này?",
+      "expected_chunk_id": "root.điều_23",
+      "document_id": 6
+    },
+    {
+      "query": "Văn bản quy định về cách thức tuyển dụng nhân công cho các xí nghiệp nhà nước và người làm việc tạm thời cho nhà nước của Bộ Lao động?",
+      "expected_chunk_id": "root",
+      "document_id": 7
+    },
+    {
+      "query": "Tôi muốn tìm hiểu các sắc lệnh căn cứ năm 1946 và 1950 làm cơ sở để ban hành quy định tuyển dụng công nhân làm việc trong các doanh nghiệp quốc gia?",
+      "expected_chunk_id": "root",
+      "document_id": 7
+    },
+    {
+      "query": "Các tiêu chuẩn về mướn người và tiền lương của công nhân doanh nghiệp quốc gia được quy định ở đâu?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 7
+    },
+    {
+      "query": "Khi tôi vào làm việc tại một doanh nghiệp quốc gia với tư cách là công nhân tạm thời, thì các điều khoản về mức lương và điều kiện làm việc của tôi sẽ được ghi nhận cụ thể trong văn bản nào?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 7
+    },
+    {
+      "query": "Hợp đồng lao động của công nhân có thể được ký kết riêng lẻ hay ký thông qua tổ chức đại diện tập thể?",
+      "expected_chunk_id": "root.điều_2",
+      "document_id": 7
+    },
+    {
+      "query": "Xí nghiệp chúng tôi có hơn 50 công nhân muốn vào làm việc, chúng tôi có thể ủy quyền cho ban chấp hành công đoàn đứng ra ký một bản giao kèo tập thể với Giám đốc thay vì từng người ký không?",
+      "expected_chunk_id": "root.điều_2",
+      "document_id": 7
+    },
+    {
+      "query": "Giới hạn thấp nhất của tiền lương trả cho công nhân doanh nghiệp quốc gia là bao nhiêu?",
+      "expected_chunk_id": "root.điều_3",
+      "document_id": 7
+    },
+    {
+      "query": "Tôi đang thỏa thuận lương với ban giám đốc xí nghiệp quốc gia, họ định trả tôi mức lương thấp hơn lương tối thiểu của công nhân giúp việc Chính phủ thì có vi phạm quy định không?",
+      "expected_chunk_id": "root.điều_3",
+      "document_id": 7
+    },
+    {
+      "query": "Tiền bù đắp độc hại, hao mòn sức khỏe và tiền thưởng tăng năng suất được thỏa thuận dựa trên yếu tố nào?",
+      "expected_chunk_id": "root.điều_4",
+      "document_id": 7
+    },
+    {
+      "query": "Công việc của tôi tại xí nghiệp có tính chất khá nguy hiểm và độc hại, vậy khoản phụ cấp nguy hiểm và hao mòn thân thể của tôi sẽ được tính toán và ghi vào đâu?",
+      "expected_chunk_id": "root.điều_4",
+      "document_id": 7
+    },
+    {
+      "query": "Chế độ cấp phát thuốc điều trị bệnh cho nhân công làm việc ở nơi có điều kiện thời tiết khắc nghiệt?",
+      "expected_chunk_id": "root.điều_5",
+      "document_id": 7
+    },
+    {
+      "query": "Xí nghiệp của chúng tôi nằm ở vùng rừng núi độc nước, khí hậu rất tồi tệ, vậy theo luật chúng tôi có được công ty phát thuốc men y tế miễn phí để phòng bệnh không?",
+      "expected_chunk_id": "root.điều_5",
+      "document_id": 7
+    },
+    {
+      "query": "Những quy định nào về giờ làm, nghỉ đẻ, tai nạn lao động hay học nghề của Sắc lệnh 77-SL được áp dụng cho công nhân doanh nghiệp quốc gia?",
+      "expected_chunk_id": "root.điều_6",
+      "document_id": 7
+    },
+    {
+      "query": "Tôi là công nhân nhà máy quốc gia bị tai nạn chấn thương trong giờ làm việc, theo nghị định thì trường hợp của tôi sẽ áp dụng các điều khoản bảo vệ sức lao động nào của Sắc lệnh số 77-SL?",
+      "expected_chunk_id": "root.điều_6",
+      "document_id": 7
+    },
+    {
+      "query": "Những cơ quan và chức vụ nào chịu trách nhiệm tổ chức thi hành nghị định quy định việc tuyển dụng công nhân của Bộ Lao động?",
+      "expected_chunk_id": "root.điều_7",
+      "document_id": 7
+    },
+    {
+      "query": "Văn bản pháp quy về tuyển dụng công nhân của doanh nghiệp quốc gia này do những ông Chủ tịch vùng nào và văn phòng nào chịu trách nhiệm thi hành thực tế?",
+      "expected_chunk_id": "root.điều_7",
+      "document_id": 7
+    },
+    {
+      "query": "Văn bản hướng dẫn cách thức chấm điểm, xếp hạng bậc lương cho công nhân của Bộ trưởng Bộ Lao động ban hành tháng 11 năm 1950?",
+      "expected_chunk_id": "root",
+      "document_id": 8
+    },
+    {
+      "query": "Thông tư số 15-LĐ-TT-P3 được gửi tới những cơ quan và cá nhân lãnh đạo nào để chỉ dẫn việc thành lập hội đồng xếp ngạch bậc?",
+      "expected_chunk_id": "root",
+      "document_id": 8
+    },
+    {
+      "query": "Thành phần hội đồng xét duyệt nâng bậc lương gồm những ai, tiêu chuẩn đánh giá và hồ sơ lý lịch công nhân cần làm mấy bản?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 8
+    },
+    {
+      "query": "Tôi là công nhân xí nghiệp, sắp tới có đợt xét chuyển ngạch bậc lương theo Thông tư 15. Cho tôi hỏi hội đồng xét duyệt ở xí nghiệp gồm có những ai tham gia, và phiếu lý lịch của tôi sau khi lập xong sẽ được gửi đi những đâu?",
+      "expected_chunk_id": "root.điều_1",
+      "document_id": 8
+    },
+    {
+      "query": "Văn bản hướng dẫn cách đưa công chức cũ sang bảng lương mới dựa trên tài năng thực tế của Bộ Nội vụ ban hành năm 1950?",
+      "expected_chunk_id": "root",
+      "document_id": 9
+    },
+    {
+      "query": "Thông tư số 41-NV-6-TT định thể lệ xếp công chức vào thang lương chung được gửi cho ai để triển khai áp dụng?",
+      "expected_chunk_id": "root",
+      "document_id": 9
+    },
+    {
+      "query": "Việc đưa công chức vào bảng lương chung nhằm giải quyết bài toán gì và phân chia công chức thành mấy loại chính?",
+      "expected_chunk_id": "root.mục_I",
+      "document_id": 9
+    },
+    {
+      "query": "Cơ quan tôi hiện tại có một số anh em cán bộ tâm tư, bất mãn vì việc xếp ngạch lương cũ quá bất công. Cho hỏi thông tư mới về xếp thang lương chung theo năng lực này có giúp sửa chữa triệt để vấn đề đó không?",
+      "expected_chunk_id": "root.mục_I",
+      "document_id": 9
+    },
+    {
+      "query": "Bản chất của đợt chuyển ngạch lương năm 1950 là chính thức hay chỉ là giải pháp tạm thời trong thời kỳ kháng chiến?",
+      "expected_chunk_id": "root.mục_II",
+      "document_id": 9
+    },
+    {
+      "query": "Tôi được xếp ngạch lương mới theo thang lương chung từ cuối năm 1950, nhưng nghe bảo đây mới chỉ là xếp tạm thời chứ chưa phải dứt khoát, điều này có đúng không và khi nào mới có tính chính thức?",
+      "expected_chunk_id": "root.mục_II",
+      "document_id": 9
+    },
+    {
+      "query": "Những nhóm cán bộ, viên chức hay người làm thuê ăn lương khoán nào thuộc diện được xem xét điều chỉnh ngạch lương đợt này?",
+      "expected_chunk_id": "root.mục_III",
+      "document_id": 9
+    },
+    {
+      "query": "Tôi là nhân viên công chính trước giờ chỉ được nhận lương khoán theo tháng chứ chưa từng được xếp vào thang lương chung của nhà nước. Trường hợp của tôi có được đưa ra xét duyệt để chuyển ngạch đợt này không?",
+      "expected_chunk_id": "root.mục_III",
+      "document_id": 9
+    },
+    {
+      "query": "Các thước đo và tiêu chí cụ thể nào được dùng để xác định một công chức được vào ngạch nào và bậc lương mấy?",
+      "expected_chunk_id": "root.mục_IV",
+      "document_id": 9
+    },
+    {
+      "query": "Tôi làm việc ở vùng đặc biệt khó khăn, thời tiết khí hậu vô cùng độc hại thì khi tính thâm niên công tác để xét nâng bậc lương theo tiêu chuẩn mới, thời gian làm việc của tôi có được ưu tiên tính thêm không?",
+      "expected_chunk_id": "root.mục_IV",
+      "document_id": 9
+    },
+    {
+      "query": "Quy trình lập hồ sơ, tổ chức lấy ý kiến đồng nghiệp trong cơ quan và thẩm quyền phê duyệt việc tạm xếp ngạch lương thuộc về ai?",
+      "expected_chunk_id": "root.mục_V",
+      "document_id": 9
+    },
+    {
+      "query": "Trưởng phòng của tôi vừa lập bảng đề nghị xếp lại ngạch lương cho tôi, nghe nói trước khi gửi hồ sơ lên cấp trên quyết định, anh ấy phải họp toàn thể nhân viên trong phòng để mọi người bỏ phiếu kín lấy ý kiến đúng không?",
+      "expected_chunk_id": "root.mục_V",
+      "document_id": 9
+    },
+    {
+      "query": "Quy định về mốc thời gian bắt đầu tính hiệu lực của việc chuyển đổi ngạch lương theo năng lực cán bộ?",
+      "expected_chunk_id": "root.mục_VI",
+      "document_id": 9
+    },
+    {
+      "query": "Sau khi hồ sơ xin chuyển ngạch lương theo năng lực của tôi được phê duyệt, tôi sẽ được truy lĩnh lương mới tính từ ngày tháng năm nào?",
+      "expected_chunk_id": "root.mục_VI",
+      "document_id": 9
+    },
+    {
+      "query": "Văn bản của Bộ Tài chính ban hành năm 1950 tóm tắt quy định về chế độ hưu trí và tiền tuất trong giai đoạn kháng chiến?",
+      "expected_chunk_id": "root",
+      "document_id": 10
+    },
+    {
+      "query": "Lý do vì sao Bộ trưởng Bộ Tài chính ban hành Thông tư số 5-TT để chấn chỉnh việc chi trả lương hưu của các cơ quan?",
+      "expected_chunk_id": "root",
+      "document_id": 10
+    },
+    {
+      "query": "Điều kiện hưởng, công thức tính và chế độ tiền tuất, tiền trợ cấp thương tật, mất tích dành cho người về hưu và người nhà được quy định thế nào?",
+      "expected_chunk_id": "root.mục_I",
+      "document_id": 10
+    },
+    {
+      "query": "Ông nội tôi là cán bộ kháng chiến bị thương tật nặng thành phế nhân không thể làm việc được nữa, cho hỏi mức lương hưu thương tật của ông tôi được tính bằng mấy phần mấy số lương lúc đi làm?",
+      "expected_chunk_id": "root.mục_I",
+      "document_id": 10
+    },
+    {
+      "query": "Những khoảng thời gian nghỉ ốm, đi bộ đội, đi học trường Pháp hay nghỉ không lương, khoảng thời gian nào được tính làm căn cứ tính lương hưu?",
+      "expected_chunk_id": "root.mục_II",
+      "document_id": 10
+    },
+    {
+      "query": "Tôi có 3 năm đi học tại trường Cao đẳng Y khoa cũ và 2 năm nghỉ dài hạn không lương vì việc riêng. Khi tính số năm công tác để hưởng hưu bổng thì những khoảng thời gian này có được cộng vào không?",
+      "expected_chunk_id": "root.mục_II",
+      "document_id": 10
+    },
+    {
+      "query": "Tỷ lệ phần trăm tiền phụ tăng được cộng thêm ngoài khoản tiền hưu bổng chính gốc của người về hưu là bao nhiêu?",
+      "expected_chunk_id": "root.mục_III",
+      "document_id": 10
+    },
+    {
+      "query": "Bác tôi chuẩn bị nhận sổ hưu, ngoài số tiền lương hưu chính ngạch tính theo năm công tác thì bác ấy có được nhà nước thưởng thêm khoản phụ tăng hưu bổng 60% theo luật kháng chiến không?",
+      "expected_chunk_id": "root.mục_III",
+      "document_id": 10
+    },
+    {
+      "query": "Quy định về khoản tiền trợ cấp gia đình nuôi con nhỏ dưới 18 tuổi cho đối tượng hưởng lương hưu hoặc vợ góa, con côi?",
+      "expected_chunk_id": "root.mục_IV",
+      "document_id": 10
+    },
+    {
+      "query": "Tôi là vợ góa của một cán bộ vừa qua đời, hiện tôi đang nuôi 2 đứa con nhỏ dưới 18 tuổi. Tôi nghe nói ngoài tiền tuất của chồng, tôi còn được nhận thêm khoản phụ cấp nuôi con bằng 50% lương hưu của chồng đúng không?",
+      "expected_chunk_id": "root.mục_IV",
+      "document_id": 10
+    },
+    {
+      "query": "Hồ sơ thủ tục cần chuẩn bị và quy trình nộp giấy tờ để nhận tiền lương hưu áp dụng cho cán bộ, quả phụ và cô nhi?",
+      "expected_chunk_id": "root.mục_V",
+      "document_id": 10
+    },
+    {
+      "query": "Bố tôi là công chức sắp đến tuổi nghỉ hưu, ông cần phải chuẩn bị những loại giấy tờ hộ tịch, đơn từ gì để nộp cho cơ quan cũ giải quyết chế độ hưu trí thâm niên?",
+      "expected_chunk_id": "root.mục_V",
+      "document_id": 10
+    },
+    {
+      "query": "Biện pháp quản lý danh sách công chức tại chức và thông tin nhân thân vợ con để làm cơ sở dữ liệu kiểm soát hưu bổng của Bộ Tài chính?",
+      "expected_chunk_id": "root.mục_VI",
+      "document_id": 10
+    },
+    {
+      "query": "Cơ quan tôi cần lập bảng danh sách lý lịch cán bộ chính ngạch gửi đi đâu để Bộ Tài chính theo dõi tình trạng gia đình, ngày cưới vợ, ngày sinh của các con nhằm phục vụ việc chi trả hưu bổng sau này?",
+      "expected_chunk_id": "root.mục_VI",
+      "document_id": 10
+    },
+    {
+      "query": "Quy trình giải quyết khi người về hưu bị mất sổ hưu hoặc sổ hưu bạ bị rách nát, hết chỗ đóng dấu lĩnh tiền?",
+      "expected_chunk_id": "root.mục_VII",
+      "document_id": 10
+    },
+    {
+      "query": "Tôi đi sơ tán chạy giặc không may làm mất tờ sổ hưu bạ lĩnh tiền hằng tháng. Bây giờ tôi phải đến Ty ngân khố nào để khai báo và làm thủ tục xin cấp lại bảng khoản mới?",
+      "expected_chunk_id": "root.mục_VII",
+      "document_id": 10
+    },
+    {
+      "query": "Nội dung quy định về việc tạm hoãn hoàn trả khoản tiền đóng bảo hiểm hưu trí trích từ tiền lương công chức?",
+      "expected_chunk_id": "root.mục_VIII",
+      "document_id": 10
+    },
+    {
+      "query": "Tôi muốn hỏi về việc xử lý số tiền hưu liễm 6% và 10% đã trừ vào lương hằng tháng của tôi trước đây, theo thông tư số 41-BTC thì việc hoàn trả tiền này được quy định ra sao?",
+      "expected_chunk_id": "root.mục_VIII",
+      "document_id": 10
+    },
+    {
+      "query": "Địa điểm rút tiền hưu hằng tháng và các loại giấy chứng nhận bắt buộc phải xuất trình khi đi nhận tiền kỳ đầu tiên là gì?",
+      "expected_chunk_id": "root.mục_X",
+      "document_id": 10
+    },
+    {
+      "query": "Tháng này là tháng đầu tiên tôi được nhận lương hưu, tôi có thể ra Ty Ngân khố ở địa phương nơi tôi đang tản cư để lĩnh không và cần mang theo giấy tờ thôi trả lương của cơ quan cũ không?",
+      "expected_chunk_id": "root.mục_X",
+      "document_id": 10
+    },
+    {
+      "query": "Trong giai đoạn chiến tranh cứu nước, thời hạn nộp đơn đòi quyền lợi hưu bổng và tiền truy lĩnh có bị xóa bỏ không?",
+      "expected_chunk_id": "root.mục_X I",
+      "document_id": 10
+    },
+    {
+      "query": "Vì điều kiện chiến tranh loạn lạc, suốt 2 năm qua tôi không thể đi lĩnh tiền hưu bổng được. Cho tôi hỏi tôi có bị mất quyền lợi hoặc bị hủy sổ hưu do quá thời hạn quy định không?",
+      "expected_chunk_id": "root.mục_X I",
+      "document_id": 10
+    },
+    {
+      "query": "Thời hạn và phương thức các cơ quan trích nộp khoản đóng góp quỹ hưu trí 10% từ lương nhân viên vào ngân khố nhà nước?",
+      "expected_chunk_id": "root.mục_XII",
+      "document_id": 10
+    },
+    {
+      "query": "Kế toán cơ quan hành chính hằng tháng trừ 10% tiền lương của anh em để nộp quỹ hưu bổng, vậy cứ sau mấy tháng cơ quan phải lập ngân phiếu tổng hợp kèm danh sách để gửi lên Giám đốc Ngân khố quốc gia?",
+      "expected_chunk_id": "root.mục_XII",
+      "document_id": 10
+    },
+    {
+      "query": "Thông tư liên bộ ban hành năm 1949 quy định các quyền lợi thai sản, giấy tờ hộ tịch cần thu thập và thủ tục mướn người làm việc tạm thời cho Chính phủ?",
+      "expected_chunk_id": "root",
+      "document_id": 11
+    },
+    {
+      "query": "Trong thời kỳ kháng chiến, khi chưa có quy chế công chức chính thức, văn bản nào tạm thời bảo vệ quyền lợi của chị em phụ nữ làm việc cho Chính phủ khi mang bầu, sinh nở?",
+      "expected_chunk_id": "root",
+      "document_id": 11
+    },
+    {
+      "query": "Thủ tục tuyển dụng đối với nhân công thường, người đưa thư, người làm giao thông tại các địa phương yêu cầu phải có sự đồng ý của cơ quan nào?",
+      "expected_chunk_id": "root.mục_1",
+      "document_id": 11
+    },
+    {
+      "query": "Tôi muốn tuyển dụng một đồng chí làm công việc liên lạc viên cho Ty chuyên môn của tỉnh, theo quy định tôi có được tự ý quyết định tuyển thẳng hay phải xin ý kiến thống nhất của Ủy ban kháng chiến hành chính tỉnh?",
+      "expected_chunk_id": "root.mục_1",
+      "document_id": 11
+    },
+    {
+      "query": "Thẩm quyền duyệt phiếu tuyển dụng nhân viên tạm thời cấp cán sự, tá sự, tham sự và việc gửi báo cáo số lượng nhân sự về Bộ Tài chính?",
+      "expected_chunk_id": "root.mục_2",
+      "document_id": 11
+    },
+    {
+      "query": "Cơ quan hành chính cấp liên khu muốn tuyển gấp một số công chức tạm thời giữ chức vụ trưởng ty chuyên môn thì quy trình ký duyệt phiếu tuyển dụng phải trình lên cơ quan nào quyết định?",
+      "expected_chunk_id": "root.mục_2",
+      "document_id": 11
+    },
+    {
+      "query": "Hướng dẫn của Bộ Quốc phòng năm 1949 về việc làm hồ sơ lý lịch, bình xét để đưa cán bộ và công nhân quốc phòng sang ngạch bậc mới?",
+      "expected_chunk_id": "root",
+      "document_id": 14
+    },
+    {
+      "query": "Hai nghị định số 98-NĐ và 99-NĐ ấn định chế độ cho nhân viên và công nhân ngành quân giới, quốc phòng bắt đầu có hiệu lực thi hành từ thời gian nào?",
+      "expected_chunk_id": "root",
+      "document_id": 14
+    },
+    {
+      "query": "Yêu cầu về hình thức khi lập danh sách đề nghị xếp ngạch lương cho nhân viên và cách ghi chú đối với những người đã đi bộ đội ra mặt trận?",
+      "expected_chunk_id": "root.mục_A",
+      "document_id": 14
+    },
+    {
+      "query": "Tôi đang làm danh sách đề nghị chuyển ngạch lương cho anh em trong Cục, có một số đồng chí đã tòng quân ra trận chiến đấu và đang hưởng chế độ quân đội thì tôi phải ghi chú vào danh sách như thế nào cho đúng hướng dẫn?",
+      "expected_chunk_id": "root.mục_A",
+      "document_id": 14
+    },
+    {
+      "query": "Quy trình thành lập hội đồng xét duyệt chuyển ngạch lương đối với nhân viên cấp tá sự và các ngạch bậc cao hơn tại Bộ Quốc phòng?",
+      "expected_chunk_id": "root.mục_B",
+      "document_id": 14
+    },
+    {
+      "query": "Trong đơn vị quân đội của tôi, việc xét duyệt nâng ngạch lương cho những anh em công nhân thường và nhân viên ngạch tá sự thấp nhất sẽ do cấp nào lập hội đồng ra quyết định và có phải trình lên Bộ trưởng duyệt không?",
+      "expected_chunk_id": "root.mục_B",
+      "document_id": 14
+    },
+    {
+      "query": "Thông tư năm 1948 của Bộ Nội vụ kêu gọi khích lệ tinh thần làm việc, phong trào thi đua và thông báo kế hoạch xây dựng Quy chế công chức mới?",
+      "expected_chunk_id": "root",
+      "document_id": 15
+    },
+    {
+      "query": "Chính phủ Dân chủ Cộng hòa đã áp dụng các biện pháp hỗ trợ vật chất khẩn cấp nào như tiền mua gạo để nâng đỡ đời sống tiểu công chức thuở ban đầu?",
+      "expected_chunk_id": "root",
+      "document_id": 15
+    },
+    {
+      "query": "Nội dung tóm tắt các công việc Bộ Nội vụ đã và đang phối hợp với các Bộ Y tế, Quốc phòng, Tư pháp để xây dựng chế độ trợ cấp vùng biên thùy, khí hậu độc hại và mức lương tối thiểu 220đ?",
+      "expected_chunk_id": "root.mục_I I",
+      "document_id": 15
+    },
+    {
+      "query": "Tôi là viên chức làm việc tạm thời, nghe nói theo sắc lệnh mới của Hồ Chủ tịch, tôi sẽ được hưởng mức lương sàn thấp nhất là 220 đồng và được nhận các khoản phụ cấp đẻ đái, ốm đau giống như người trong biên chế chính thức đúng không?",
+      "expected_chunk_id": "root.mục_I I",
+      "document_id": 15
+    },
+    {
+      "query": "Sau khi hoàn thiện hệ thống văn bản pháp luật chung, các đơn vị chuyên môn cần mất khoảng thời gian bao lâu để triển khai sắp xếp nhân sự vào ngạch mới?",
+      "expected_chunk_id": "root.mục_III",
+      "document_id": 15
+    },
+    {
+      "query": "Để chuẩn bị đưa toàn bộ nhân viên hành chính vào ngạch bậc lương mới theo mẫu quy tắc chung, các cơ quan ban ngành địa phương dự kiến phải mất bao nhiêu tháng mới hoàn thành việc rà soát hồ sơ?",
+      "expected_chunk_id": "root.mục_III",
+      "document_id": 15
     }
   ]

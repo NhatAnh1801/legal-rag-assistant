@@ -2,32 +2,33 @@ from src.data_loader.base import BaseDataLoader
 from src.data_loader.vn import VietnameseDataLoader
 from src.processing.base import BaseDocumentProcessor
 from src.processing.vn import VietnameseDocumentProcessor
+from src.models.embeddings.base import BaseEmbedding
+from src.models.embeddings.vn_law_embedding import VNLawEmbedding
 from src.qdrant import Qdrant
-from src.models.embeddings.gte_multi_base import GTE 
 
 from dataclasses import dataclass
 from typing import Any, Type
 
 @dataclass(frozen=True)
-class CountryConfig:
+class IngestConfig:
     loader_class: Type[BaseDataLoader]
     processor_class: Type[BaseDocumentProcessor]
-    embedding_model: Any
+    embedding_class: Type[BaseEmbedding]
+    vector_db_class: Type[Any]
     collection_name: str
     hash_cache_path: str
-    vector_db_class: Type[Any]
     id_field: str
     content_field: str
     metadata_fields: dict[str, Any]
     
-COUNTRY_CONFIG = {
-    "vn": CountryConfig(
+INGEST_CONFIG = {
+    "vn": IngestConfig(
         loader_class=VietnameseDataLoader,
         processor_class=VietnameseDocumentProcessor,
-        embedding_model=GTE(),
+        embedding_class=VNLawEmbedding,
+        vector_db_class=Qdrant,
         collection_name="vn_documents",
         hash_cache_path="./data/cache/vn_hashes.json",
-        vector_db_class=Qdrant,
         id_field="id",
         content_field="content_html",
         metadata_fields={
@@ -46,5 +47,5 @@ COUNTRY_CONFIG = {
     )
 }
 
-def get_country_config(country: str) -> CountryConfig:
-    return COUNTRY_CONFIG[country]
+def get_ingest_config(country: str) -> IngestConfig:
+    return INGEST_CONFIG[country]
